@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<meta name="description" content="lawรัย: คำนวณอายุความ ประเมินความเสี่ยงถูกฟ้องกลับ และสรุปเหตุการณ์เป็นบัตรคิวพร้อมแนวทางเบื้องต้น"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%E2%9A%96%EF%B8%8F%3C/text%3E%3C/svg%3E"/>
+<title>lawรัย — ตรวจอายุความและประเมินความเสี่ยงทางกฎหมายเบื้องต้น</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&amp;family=Noto+Serif+Thai:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                colors: {
+                    darkbg: '#10141F',
+                    darkcard: '#161B2B',
+                    darksubcard: '#1E2437',
+                    darkborder: '#2A3146',
+                    darktext: '#E7EAF3',
+                    darkmuted: '#9AA3B8',
+                    orange: {50:'#EEF0FB',100:'#DDE2F7',200:'#BBC4EF',300:'#C3CCF7',400:'#A4B1F2',500:'#8394EC',600:'#2F40A3',700:'#26358A',800:'#202C70',900:'#1B2559',950:'#0F1533'},
+                    stone: {50:'#F4F5F1',100:'#E8EAE5',200:'#D6D9D3',300:'#BCC0BB',400:'#8E949B',500:'#6A717B',600:'#4E5560',700:'#394049',800:'#262C3A',900:'#1A1F2E',950:'#10141F'}
+                },
+                fontFamily: {
+                    sans: ['"IBM Plex Sans Thai"', 'sans-serif'],
+                    display: ['"Noto Serif Thai"', 'serif'],
+                    mono: ['"IBM Plex Sans Thai"', 'sans-serif'],
+                }
+            }
+        }
+    }
+</script>
+<style>
+    body { font-family: 'IBM Plex Sans Thai', sans-serif; background-color: #EEF0EA; color: #10141F; overflow-x: hidden; transition: background-color 0.3s ease, color 0.3s ease; }
+    html.dark body { background-color: #10141F; color: #E7EAF3; }
+    
+    .editorial-grid {
+        background-size: 40px 40px;
+        background-image: linear-gradient(to right, rgba(20, 20, 19, 0.035) 1px, transparent 1px),
+                          linear-gradient(to bottom, rgba(20, 20, 19, 0.035) 1px, transparent 1px);
+    }
+    html.dark .editorial-grid {
+        background-image: linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+                          linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    }
+
+    #ambient-glow {
+        pointer-events: none; position: fixed; width: 650px; height: 650px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(47, 64, 163, 0.05) 0%, rgba(245, 158, 11, 0.02) 40%, transparent 70%);
+        transform: translate(-50%, -50%); z-index: 1; will-change: transform;
+    }
+    html.dark #ambient-glow {
+        background: radial-gradient(circle, rgba(47, 64, 163, 0.09) 0%, rgba(245, 158, 11, 0.04) 45%, transparent 70%);
+    }
+
+    @keyframes wavy-drift {
+        0%, 100% { text-decoration-color: #2F40A3; text-underline-offset: 8px; }
+        50% { text-decoration-color: #26358A; text-underline-offset: 12px; }
+    }
+    .animated-wavy { text-decoration-line: underline; text-decoration-style: wavy; text-decoration-thickness: 3px; animation: wavy-drift 3s ease-in-out infinite; }
+
+    /* Traffic signal animations */
+    .bauhaus-light { transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+    .bauhaus-light:active { transform: scale(0.92); }
+    .active-red-light { background-color: #DC2626 !important; box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.35), 0 12px 30px rgba(220, 38, 38, 0.6); transform: scale(1.06); color: #fff !important; opacity: 1 !important; }
+    .active-yellow-light { background-color: #F59E0B !important; box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.35), 0 12px 30px rgba(245, 158, 11, 0.6); transform: scale(1.06); color: #10141F !important; opacity: 1 !important; }
+    .active-green-light { background-color: #059669 !important; box-shadow: 0 0 0 6px rgba(5, 150, 105, 0.35), 0 12px 30px rgba(5, 150, 105, 0.6); transform: scale(1.06); color: #fff !important; opacity: 1 !important; }
+
+    .paper-card {
+        background-color: #FFFFFF; border: 1px solid #CDD1C8;
+        box-shadow: 0 4px 20px -2px rgba(20, 20, 19, 0.05);
+        transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.3s ease, border-color 0.3s ease;
+    }
+    html.dark .paper-card {
+        background-color: #161B2B;
+        border-color: #2A3146;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+    }
+    .paper-card:hover { transform: translateY(-4px); box-shadow: 0 16px 30px -6px rgba(20, 20, 19, 0.08); }
+    html.dark .paper-card:hover { box-shadow: 0 16px 30px -6px rgba(0, 0, 0, 0.55); }
+
+    /* TICKET TEARING PHYSICS ANIMATIONS */
+    .jagged-edge-top {
+        background: radial-gradient(circle at 6px 0px, transparent 4px, #ffffff 4.5px);
+        background-size: 12px 8px; background-repeat: repeat-x;
+    }
+    html.dark .jagged-edge-top {
+        background: radial-gradient(circle at 6px 0px, transparent 4px, #1C2236 4.5px);
+        background-size: 12px 8px; background-repeat: repeat-x;
+    }
+
+    @keyframes ticket-dispense {
+        0% { transform: translateY(-40%) scale(0.96); opacity: 0; }
+        100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    @keyframes ticket-tear {
+        0% { transform: translateY(0) rotate(0deg); }
+        20% { transform: translateY(6px) rotate(2.5deg); }
+        45% { transform: translateY(22px) rotate(-3.5deg) translateX(-4px); }
+        70% { transform: translateY(42px) rotate(2deg) translateX(4px); box-shadow: 0 24px 40px rgba(0,0,0,0.25); }
+        100% { transform: translateY(32px) rotate(1deg) translateX(2px); box-shadow: 0 18px 30px rgba(0,0,0,0.2); }
+    }
+    @keyframes stub-recoil {
+        0% { transform: translateY(0); }
+        35% { transform: translateY(-4px); }
+        100% { transform: translateY(0); }
+    }
+    .anim-dispense { animation: ticket-dispense 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .anim-tearing { animation: ticket-tear 0.8s cubic-bezier(0.2, 1, 0.35, 1) forwards; transform-origin: top left; }
+    .anim-stub { animation: stub-recoil 0.4s ease-out forwards; }
+
+    .barcode-lines {
+        background: repeating-linear-gradient(90deg, #10141F, #10141F 2px, transparent 2px, transparent 4px, #10141F 4px, #10141F 7px, transparent 7px, transparent 9px, #10141F 9px, #10141F 13px, transparent 13px, transparent 16px);
+    }
+    html.dark .barcode-lines {
+        background: repeating-linear-gradient(90deg, #E3E6F0, #E3E6F0 2px, transparent 2px, transparent 4px, #E3E6F0 4px, #E3E6F0 7px, transparent 7px, transparent 9px, #E3E6F0 9px, #E3E6F0 13px, transparent 13px, transparent 16px);
+    }
+
+    @keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    .live-dot { animation: pulse-live 1.8s infinite; }
+    
+    @keyframes toast-in-out {
+        0% { transform: translate(-50%, 20px) scale(0.95); opacity: 0; }
+        15% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+        85% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+        100% { transform: translate(-50%, -15px) scale(0.95); opacity: 0; }
+    }
+    .toast-anim { animation: toast-in-out 3.2s ease-in-out forwards; }
+
+    .intake-input:focus {
+        border-color: #2F40A3;
+        box-shadow: 0 0 0 2px rgba(47, 64, 163, 0.25);
+    }
+
+    :root { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+    html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 72px); }
+    header.sticky { top: env(safe-area-inset-top, 0px); }
+    button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid #2F40A3; outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+    @media print {
+      body * { visibility: hidden !important; }
+      #tearable-ticket-body, #tearable-ticket-body * { visibility: visible !important; }
+      #tearable-ticket-body { position: absolute; left: 0; top: 0; width: 100%; max-width: 420px; animation: none !important; transform: none !important; box-shadow: none !important; }
+    }
+
+    html { --page: #EEF0EA; } html.dark { --page: #10141F; }
+    .editorial-grid, html.dark .editorial-grid { background-size: auto; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 35px, rgba(47,64,163,.075) 35px, rgba(47,64,163,.075) 36px); }
+    html.dark .editorial-grid { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 35px, rgba(131,148,236,.07) 35px, rgba(131,148,236,.07) 36px); }
+    #ambient-glow { display: none; }
+    .rounded-2xl, .rounded-3xl { border-radius: 8px !important; } .rounded-xl { border-radius: 6px !important; }
+    .paper-card, html.dark .paper-card { box-shadow: none; }
+    .paper-card:hover, html.dark .paper-card:hover { transform: none; box-shadow: none; border-color: #2F40A3; }
+    html.dark .paper-card:hover { border-color: #8394EC; }
+    .font-mono { letter-spacing: 0; }
+    .hero-ticket { background: #F7F8F4; color: #10141F; border-radius: 6px; position: relative; transform: rotate(-1.6deg); box-shadow: 0 1px 0 rgba(16,20,31,.12), 8px 10px 0 rgba(47,64,163,.16); }
+    html.dark .hero-ticket { box-shadow: 0 1px 0 rgba(0,0,0,.4), 8px 10px 0 rgba(131,148,236,.18); }
+    .hero-ticket .perf { position: relative; border-top: 2px dashed #9AA0B4; margin: 0; }
+    .hero-ticket .perf::before, .hero-ticket .perf::after { content: ''; position: absolute; top: -11px; width: 20px; height: 20px; border-radius: 50%; background: var(--page); }
+    .hero-ticket .perf::before { left: -10px; } .hero-ticket .perf::after { right: -10px; }
+    .hero-ticket .barcode-lines { background: repeating-linear-gradient(90deg, #10141F, #10141F 2px, transparent 2px, transparent 4px, #10141F 4px, #10141F 7px, transparent 7px, transparent 9px, #10141F 9px, #10141F 13px, transparent 13px, transparent 16px); }
+    @media print {
+      body:has(#ticket-modal:not(.hidden)) > *:not(#ticket-modal) { display: none !important; }
+      #ticket-modal:not(.hidden) { position: static !important; background: #fff !important; display: block !important; }
+      #ticket-modal button, #intake-step { display: none !important; }
+      #ticket-modal > div { box-shadow: none !important; border: 0 !important; background: #fff !important; }
+    }
+</style>
+</head>
+<body class="editorial-grid min-h-screen flex flex-col justify-between selection:bg-orange-600 selection:text-white relative">
+<div aria-hidden="true" id="ambient-glow"></div>
+<!-- Custom Floating Notification Toast -->
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none transition-all hidden" id="app-toast">
+<div class="bg-stone-900/95 dark:bg-stone-800/95 text-white backdrop-blur-md border border-stone-700/80 px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-mono">
+<span class="text-base" id="toast-icon">✨</span>
+<span class="font-sans font-medium text-stone-100" id="toast-text">แจ้งเตือน</span>
+</div>
+</div>
+<!-- Top Ticker Bar -->
+<div class="border-b border-stone-300 dark:border-stone-800 bg-stone-100/90 dark:bg-stone-950 text-xs py-1.5 px-4 text-stone-600 dark:text-stone-400 text-center relative z-30">เครื่องมือคัดกรองปัญหากฎหมายเบื้องต้น ไม่ใช่คำปรึกษาจากทนายความ</div>
+<!-- Header -->
+<header class="border-b border-stone-300 dark:border-stone-800 bg-[#EEF0EA]/90 dark:bg-[#10141F]/90 backdrop-blur-md sticky top-0 z-40 transition-colors">
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap justify-between items-center gap-4">
+<div class="flex items-center gap-3 sm:gap-4">
+<a class="flex items-center space-x-2 group cursor-pointer" href="javascript:void(0)" onclick="navigateTo('home')">
+<span class="w-8 h-8 rounded-lg bg-stone-950 dark:bg-stone-800 text-white flex items-center justify-center font-black text-sm group-hover:bg-orange-600 dark:group-hover:bg-orange-600 transition-colors">§</span>
+<span class="text-2xl font-black tracking-tight text-stone-900 dark:text-stone-100 font-display">law<span class="text-orange-600 dark:text-orange-500">รัย</span></span>
+</a>
+
+</div>
+<nav class="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs font-medium">
+<button class="px-3.5 py-1.5 rounded-full transition font-semibold text-stone-950 dark:text-white bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 shadow-sm" id="nav-home" onclick="navigateTo('home')">หน้าหลัก</button>
+<button class="px-3.5 py-1.5 rounded-full transition text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200/50 dark:hover:bg-stone-800/60" id="nav-tools" onclick="navigateTo('tools')">เครื่องมือทางกฎหมาย</button>
+<button class="px-3.5 py-1.5 rounded-full transition text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200/50 dark:hover:bg-stone-800/60" id="nav-knowledge" onclick="navigateTo('knowledge')">คลังความรู้</button>
+<button class="px-3.5 py-1.5 rounded-full transition text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200/50 dark:hover:bg-stone-800/60" id="nav-about" onclick="navigateTo('about')">เกี่ยวกับเรา</button>
+<!-- Audio Toggle -->
+<button class="px-2.5 py-1.5 rounded-full border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 hover:border-orange-500 text-stone-700 dark:text-stone-300 transition flex items-center gap-1.5 text-xs font-mono shadow-sm" id="audio-toggle-btn" onclick="toggleAudio()" title="เปิด/ปิดเสียงสังเคราะห์">
+<span id="audio-icon">🔊</span>
+<span class="hidden xl:inline font-bold text-[11px]" id="audio-label">AUDIO ON</span>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500" id="audio-led"></span>
+</button>
+<!-- Dark Mode Switcher -->
+<button class="px-2.5 py-1.5 rounded-full border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 hover:border-orange-500 dark:hover:border-orange-500 text-stone-700 dark:text-stone-200 transition flex items-center gap-1.5 text-xs font-mono shadow-sm cursor-pointer" id="theme-toggle-btn" onclick="toggleDarkMode()" title="สลับโหมด Dark/Light">
+<span id="theme-icon">🌙</span>
+<span class="hidden sm:inline font-bold text-[11px]" id="theme-label">DARK</span>
+</button>
+<!-- Tear Ticket CTA Button -->
+<button class="ml-1 px-3.5 sm:px-4 py-1.5 rounded-full font-bold bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-950 hover:bg-orange-600 dark:hover:bg-orange-500 transition flex items-center gap-1.5 group shadow-sm text-xs" onclick="openTicketDispenser('navbar')">
+<span class="group-hover:scale-110 transition-transform">🎟️</span>
+<span class="hidden md:inline">กดบัตรคิว AI (สรุปเหตุการณ์ &amp; ฉีกตั๋ว)</span>
+<span class="md:hidden">ฉีกตั๋ว AI</span>
+</button>
+</nav>
+</div>
+</header>
+<main class="flex-grow relative z-10">
+<!-- PAGE 1: HOME -->
+<section class="py-10 md:py-14 px-4 max-w-6xl mx-auto" id="page-home">
+<!-- Hero Title -->
+<div class="grid grid-cols-1 md:grid-cols-[1.15fr_0.85fr] gap-12 items-center mb-16 pt-2">
+<div>
+<h1 class="font-display font-bold text-4xl sm:text-5xl md:text-6xl leading-[1.2] text-stone-950 dark:text-stone-50">ทุกการรอ<br/>มีกฎหมายซ่อนอยู่</h1>
+<p class="mt-6 text-base md:text-lg text-stone-700 dark:text-stone-300 max-w-md leading-relaxed">ใส่วันที่เกิดเหตุ แล้วดูว่าเหลือเวลาฟ้องหรือแจ้งความอีกกี่วัน ก่อนที่สิทธิของคุณจะหมดไปเงียบ ๆ</p>
+<div class="mt-8 flex flex-wrap gap-3">
+<button class="px-5 py-3 rounded-md bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold transition" onclick="navigateTo('tools')">เช็กอายุความ</button>
+<button class="px-5 py-3 rounded-md border border-stone-400 dark:border-stone-600 text-stone-900 dark:text-stone-100 text-sm font-semibold hover:bg-stone-200/60 dark:hover:bg-stone-800 transition" onclick="openTicketDispenser('hero')">รับบัตรคิวสรุปเหตุการณ์</button>
+</div>
+</div>
+<div class="anim-dispense mx-auto w-full max-w-[19rem]" role="img" aria-label="ตัวอย่างบัตรคิว เหตุยืมเงินไม่คืน เหลือเวลาฟ้อง 9 ปี 8 เดือน">
+<div class="hero-ticket">
+<div class="px-6 pt-6 pb-5">
+<p class="text-xs text-stone-600">บัตรคิวของคุณ</p>
+<p class="font-display font-extrabold text-5xl tracking-tight mt-1">A-017</p>
+</div>
+<div class="perf"></div>
+<div class="px-6 pt-5 pb-6">
+<p class="text-xs text-stone-600">เหตุการณ์</p>
+<p class="font-semibold text-sm mt-0.5">ยืมเงินไม่คืน 50,000 บาท</p>
+<p class="text-xs text-stone-600 mt-4">เหลือเวลาฟ้อง</p>
+<p class="font-display font-bold text-2xl text-orange-700">9 ปี 8 เดือน</p>
+<div class="h-8 w-full barcode-lines mt-5 opacity-80 rounded-sm"></div>
+<p class="text-[11px] text-stone-500 mt-2">ตัวอย่างบัตร ของจริงออกจากเหตุการณ์ของคุณ</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Bauhaus Signal Controller -->
+<div class="relative max-w-4xl mx-auto mb-14">
+<div class="paper-card rounded-3xl p-6 sm:p-8 md:p-10 border shadow-md">
+<div class="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-4 mb-8 text-xs font-mono">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-stone-900 dark:bg-orange-500 inline-block"></span>
+<span class="font-bold text-stone-900 dark:text-stone-100">ทดลองอ่านสัญญาณไฟ</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-stone-400 dark:text-stone-500 hidden sm:inline">พ.ร.บ. จราจรทางบก</span>
+<span class="bg-orange-100 dark:bg-orange-950/70 text-orange-800 dark:text-orange-300 font-bold px-2.5 py-0.5 rounded-full border border-orange-200 dark:border-orange-800 text-[11px]">ตัวอย่างจำลอง</span>
+</div>
+</div>
+<div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+<!-- Traffic Light Housing -->
+<div class="shrink-0 flex flex-col items-center">
+<div class="bg-stone-900 dark:bg-stone-950 p-4 sm:p-5 rounded-[2.5rem] border-4 border-stone-800 dark:border-stone-800 shadow-2xl flex md:flex-col gap-4 sm:gap-5 items-center" id="traffic-light-housing">
+<button class="bauhaus-light active-red-light w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-stone-800 text-stone-400 font-bold text-xs flex flex-col items-center justify-center border-2 border-stone-700/60 opacity-60 hover:opacity-100 cursor-pointer" id="red-light" onclick="selectLight('red')">
+<span class="text-base sm:text-lg">🔴</span>
+<span class="text-[10px] font-mono tracking-wider font-bold mt-0.5">หยุด</span>
+</button>
+<button class="bauhaus-light w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-stone-800 text-stone-400 font-bold text-xs flex flex-col items-center justify-center border-2 border-stone-700/60 opacity-60 hover:opacity-100 cursor-pointer" id="yellow-light" onclick="selectLight('yellow')">
+<span class="text-base sm:text-lg">🟡</span>
+<span class="text-[10px] font-mono tracking-wider font-bold mt-0.5">ชะลอ</span>
+</button>
+<button class="bauhaus-light w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-stone-800 text-stone-400 font-bold text-xs flex flex-col items-center justify-center border-2 border-stone-700/60 opacity-60 hover:opacity-100 cursor-pointer" id="green-light" onclick="selectLight('green')">
+<span class="text-base sm:text-lg">🟢</span>
+<span class="text-[10px] font-mono tracking-wider font-bold mt-0.5">ไปต่อ</span>
+</button>
+</div>
+<span class="mt-3 text-[11px] font-mono text-stone-400 dark:text-stone-500 font-medium flex items-center gap-1">
+<span class="text-orange-600 dark:text-orange-500">👆</span> กดเปลี่ยนสัญญาณไฟ (เสียง &amp; Haptic สั่น)
+            </span>
+</div>
+<!-- Dynamic Details Panel -->
+<div class="flex-1 w-full">
+<div class="bg-stone-50 dark:bg-stone-900/60 border border-stone-200 dark:border-stone-800 rounded-2xl p-6 sm:p-7 relative transition-all" id="light-card-container">
+<div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+<div class="flex items-center gap-2">
+<span class="px-3 py-1 rounded-full text-xs font-bold font-mono bg-red-100 dark:bg-red-950/70 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/60 flex items-center gap-1.5" id="light-badge">
+<span class="w-2 h-2 rounded-full bg-red-600 live-dot"></span> สัญญาณไฟสีแดง // RED HAZARD
+                  </span>
+<span class="px-2.5 py-0.5 rounded-md text-[11px] font-mono bg-stone-200 dark:bg-stone-800 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 font-bold" id="risk-score-pill">CRITICAL: 95%</span>
+</div>
+<span class="text-[11px] font-mono text-stone-500 dark:text-stone-400 font-medium flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span> กำลังแสดง
+                </span>
+</div>
+<h3 class="text-xl sm:text-2xl font-extrabold mb-3 text-stone-950 dark:text-stone-50 flex items-center gap-2" id="light-title">🔴 สัญญาณไฟสีแดง: ต้องหยุดรถทันที</h3>
+<p class="text-sm text-stone-700 dark:text-stone-300 leading-relaxed mb-5 font-light" id="light-meaning">ผู้ขับขี่ต้องหยุดรถหลัง "เส้นแนวหยุดรถ" ห้ามขับรถผ่านเส้นหยุดรถ การฝ่าฝืนมีโทษปรับและอาจถูกตัดคะแนนความประพฤติ</p>
+<div class="bg-red-50/80 dark:bg-red-950/30 p-4 sm:p-5 rounded-xl border border-red-200 dark:border-red-900/50 mb-6" id="light-penalty-box">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-mono font-bold text-red-700 dark:text-red-400" id="light-penalty-label">⚠️ บทลงโทษและผลทางคดี (LEGAL CONSEQUENCE)</span>
+<span class="text-[11px] font-mono text-red-600 dark:text-red-300 bg-red-100/70 dark:bg-red-900/40 px-2 py-0.5 rounded" id="light-penalty-law">พ.ร.บ. จราจรทางบก</span>
+</div>
+<p class="text-xs sm:text-sm text-red-900/90 dark:text-red-200 leading-relaxed" id="light-penalty">ปรับไม่เกิน 1,000 บาท และอาจถูกตัดคะแนนความประพฤติตามเกณฑ์ของกรมการขนส่งทางบก หากเกิดอุบัติเหตุ ฝ่ายที่ฝ่าฝืนสัญญาณมักเสี่ยงต้องรับผิดมากกว่า</p>
+</div>
+<div class="flex flex-wrap items-center gap-3 pt-1">
+<button class="px-5 py-2.5 bg-stone-900 dark:bg-white hover:bg-orange-600 dark:hover:bg-orange-500 text-white dark:text-stone-950 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm" onclick="navigateTo('tools')">
+                  ⏱️ เช็กอายุความเคสนี้
+                </button>
+<button class="px-5 py-2.5 bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm" onclick="openTicketDispenser('signal')">
+                  🎟️ ฉีกตั๋วคิวเพื่อวิเคราะห์ทางออก
+                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 3 Feature Columns -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="paper-card p-6 sm:p-7 rounded-2xl cursor-pointer hover:border-orange-500 transition group" onclick="navigateTo('tools')">
+<div class="w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">⏱️</div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-[11px] font-mono font-bold text-orange-600 dark:text-orange-500 uppercase">เครื่องคำนวณ</span>
+<span class="text-stone-400 text-xs font-mono group-hover:text-stone-900 dark:group-hover:text-stone-100 transition">เปิดดู</span>
+</div>
+<h3 class="font-extrabold text-lg text-stone-950 dark:text-stone-100 group-hover:text-orange-600 dark:group-hover:text-orange-500 transition mb-2">เครื่องมือคำนวณอายุความ</h3>
+<p class="text-xs text-stone-600 dark:text-stone-400 leading-relaxed mb-5">เช็กวันหมดอายุความคดีแพ่ง-อาญา พร้อมปุ่มบันทึกลง Google Calendar กันพลาดก่อนหมดสิทธิฟ้องร้องดำเนินคดี</p>
+<div class="h-1.5 w-full bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden border border-stone-200 dark:border-stone-700">
+<div class="w-3/4 h-full bg-orange-500 group-hover:w-full transition-all duration-500"></div>
+</div>
+</div>
+<div class="paper-card p-6 sm:p-7 rounded-2xl cursor-pointer hover:border-blue-500 transition group" onclick="navigateTo('tools')">
+<div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">🚦</div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400 uppercase">แบบประเมิน</span>
+<span class="text-stone-400 text-xs font-mono group-hover:text-stone-900 dark:group-hover:text-stone-100 transition">เปิดดู</span>
+</div>
+<h3 class="font-extrabold text-lg text-stone-950 dark:text-stone-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition mb-2">สัญญาณไฟเสี่ยงคุก</h3>
+<p class="text-xs text-stone-600 dark:text-stone-400 leading-relaxed mb-5">แบบประเมินเรดาห์ความเสี่ยง 5 ข้อ ประเมินโอกาสถูกฟ้องกลับหรือเสี่ยงคุก ก่อนตัดสินใจโพสต์ประจานหรือทวงหนี้ผิดวิธี</p>
+<div class="h-1.5 w-full bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden border border-stone-200 dark:border-stone-700">
+<div class="w-1/2 h-full bg-blue-600 group-hover:w-full transition-all duration-500"></div>
+</div>
+</div>
+<div class="paper-card p-6 sm:p-7 rounded-2xl cursor-pointer hover:border-emerald-500 transition group" onclick="openTicketDispenser('card')">
+<div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">🎟️</div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase">บัตรคิว</span>
+<span class="text-stone-400 text-xs font-mono group-hover:text-stone-900 dark:group-hover:text-stone-100 transition">ออกบัตร</span>
+</div>
+<h3 class="font-extrabold text-lg text-stone-950 dark:text-stone-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition mb-2">บัตรคิวสรุปปัญหา AI</h3>
+<p class="text-xs text-stone-600 dark:text-stone-400 leading-relaxed mb-5">กรอกเหตุการณ์ ย่อเรื่อง สรุปข้อกฎหมาย พร้อมอนิเมชันฉีกตั๋วเก็บเป็นหลักฐานพกไปปรึกษาทนายได้ทันที</p>
+<div class="h-1.5 w-full bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden border border-stone-200 dark:border-stone-700">
+<div class="w-4/5 h-full bg-emerald-600 group-hover:w-full transition-all duration-500"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- PAGE 2: TOOLS (Calculators & Simulators) -->
+<section class="py-10 md:py-14 px-4 max-w-6xl mx-auto hidden" id="page-tools">
+<div class="mb-10 text-center max-w-2xl mx-auto">
+<span class="px-3 py-1 bg-orange-100 dark:bg-orange-950/70 text-orange-800 dark:text-orange-300 rounded-full text-xs font-mono font-bold border border-orange-200 dark:border-orange-800">เครื่องมือ</span>
+<h2 class="text-3xl sm:text-4xl font-extrabold text-stone-950 dark:text-stone-50 mt-3 font-display">เครื่องมือประเมินสิทธิ &amp; วิเคราะห์ความเสี่ยง</h2>
+<p class="text-stone-600 dark:text-stone-300 text-sm mt-2 font-light">คำนวณอายุความ กำหนดส่งจดหมายบอกกล่าว และตรวจสถานะข้อกฎหมายแบบแม่นยำ</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+<!-- Tool 1: Statute of Limitations Calculator -->
+<div class="paper-card rounded-2xl p-6 sm:p-8">
+<div class="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3 mb-6">
+<div class="flex items-center gap-2">
+<span class="text-xl">⏱️</span>
+<h3 class="font-bold text-stone-900 dark:text-stone-100 text-base">คำนวณวันสิ้นสุดอายุความ</h3>
+</div>
+<span class="text-xs font-mono bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded text-stone-600 dark:text-stone-300">คำนวณ</span>
+</div>
+<div class="space-y-4 text-xs font-mono">
+<div>
+<label class="block font-sans font-semibold text-stone-800 dark:text-stone-200 mb-1.5">1. เลือกประเภทข้อพิพาท / ฐานความผิด</label>
+<select class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2.5 text-stone-900 dark:text-stone-100 text-xs font-sans intake-input focus:outline-none" id="calc-category" onchange="runPrescriptionCalc()">
+<option value="tort_general">ละเมิดทั่วไป (รู้ตัวผู้กระทำและรู้ความเสียหาย) — 1 ปี</option>
+<option value="debt_loan">สัญญากู้ยืมเงิน / ผิดนัดชำระหนี้ตามสัญญา — 10 ปี</option>
+<option value="rent_arrears">ค่าเช่าค้างชำระ / ค่าบริการรายงวด — 5 ปี</option>
+<option value="cheque_dishonor">เช็คเด้ง (พ.ร.บ. ความผิดอันเกิดจากการใช้เช็คฯ) — 3 เดือน</option>
+<option value="defamation_criminal">หมิ่นประมาท / พ.ร.บ. คอมพิวเตอร์ฯ (รู้เรื่องและรู้ตัว) — 3 เดือน</option>
+<option value="fraud_complaint">ฉ้อโกง / ยักยอกทั่วไป (ต้องร้องทุกข์) — 3 เดือน</option>
+<option value="labor_wage">ฟ้องเรียกค่าจ้างค้างจ่าย — 2 ปี</option>
+</select>
+</div>
+<div>
+<label class="block font-sans font-semibold text-stone-800 dark:text-stone-200 mb-1.5">2. วันที่เกิดเหตุ หรือ วันที่รู้ตัวผู้กระทำความผิด</label>
+<input class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2.5 text-stone-900 dark:text-stone-100 text-xs font-mono intake-input focus:outline-none" id="calc-date" onchange="runPrescriptionCalc()" type="date"/>
+</div>
+<div class="pt-2">
+<button class="w-full bg-stone-900 dark:bg-white hover:bg-orange-600 dark:hover:bg-orange-500 text-white dark:text-stone-950 font-sans font-bold py-2.5 rounded-xl text-xs transition shadow-sm" onclick="runPrescriptionCalc()">
+              คำนวณวันหมดอายุความ &amp; แนวทาง
+            </button>
+</div>
+<!-- Calculation Result Display -->
+<div class="bg-stone-50 dark:bg-stone-900/60 border border-stone-200 dark:border-stone-800 rounded-xl p-4 mt-4 font-sans" id="calc-result-box">
+<div class="flex items-center justify-between text-xs font-mono border-b border-stone-200 dark:border-stone-800 pb-2 mb-3">
+<span class="text-stone-500 dark:text-stone-400">ผลการประเมินสถานะ</span>
+<span class="font-bold text-orange-600 dark:text-orange-500" id="res-status-tag">รอการเลือกวันที่</span>
+</div>
+<div class="text-stone-800 dark:text-stone-200 text-xs space-y-1.5">
+<p><span class="font-semibold text-stone-900 dark:text-stone-100">วันสิ้นสุดอายุความโดยประมาณ:</span> <span class="font-mono font-bold text-sm text-stone-950 dark:text-stone-50" id="res-expiry-date">—</span></p>
+<p><span class="font-semibold text-stone-900 dark:text-stone-100">ระยะเวลาที่เหลือ:</span> <span class="font-mono font-bold text-orange-600 dark:text-orange-500" id="res-days-left">—</span></p>
+<p class="text-stone-500 dark:text-stone-400 pt-1 text-[11px]" id="res-legal-advice" aria-live="polite">โปรดเลือกประเภทคดีและวันที่เกิดเหตุเพื่อคำนวณข้อกฎหมาย</p>
+</div>
+<div class="mt-4 pt-3 border-t border-stone-200 dark:border-stone-800 flex gap-2">
+<button class="flex-1 bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 text-xs py-2 rounded-lg font-medium transition" onclick="addToGoogleCalendar()">
+                📅 เพิ่มเตือนใน Google Calendar
+              </button>
+<button class="bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 text-xs px-3 py-2 rounded-lg font-medium transition" onclick="copyCalcResult()">📋 คัดลอก</button>
+<button class="bg-orange-600 hover:bg-orange-700 text-white text-xs px-3 py-2 rounded-lg font-medium transition" onclick="openTicketDispenser('calc-result')">
+                🎟️ ฉีกตั๋วเคสนี้
+              </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Tool 2: Risk Radar Assessment -->
+<div class="paper-card rounded-2xl p-6 sm:p-8">
+<div class="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3 mb-6">
+<div class="flex items-center gap-2">
+<span class="text-xl">🚦</span>
+<h3 class="font-bold text-stone-900 dark:text-stone-100 text-base">แบบตรวจจับเรดาห์ความเสี่ยงฟ้องกลับ</h3>
+</div>
+<span class="text-xs font-mono bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 px-2 py-1 rounded">5 คำถาม</span>
+</div>
+<form class="space-y-4 text-xs font-sans" id="risk-form" onsubmit="event.preventDefault(); evaluateRisk();"></form>
+</div>
+</div>
+
+<!-- Tool 3: Notice letter generator -->
+<div class="paper-card rounded-2xl p-6 sm:p-8 mb-12" id="notice-tool">
+<div class="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3 mb-6">
+<div class="flex items-center gap-2"><span class="text-xl">✉️</span><h3 class="font-bold text-stone-900 dark:text-stone-100 text-base">ร่างหนังสือบอกกล่าวทวงถาม</h3></div>
+<span class="text-xs font-mono bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 px-2 py-1 rounded">ร่างจดหมาย</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<div class="space-y-3 text-xs font-sans">
+<div><label class="block font-semibold text-stone-800 dark:text-stone-200 mb-1" for="nt-type">ประเภทหนี้</label>
+<select class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2.5 text-stone-900 dark:text-stone-100 text-xs font-sans intake-input focus:outline-none" id="nt-type"><option value="loan">เงินกู้ยืม</option><option value="rent">ค่าเช่าค้างชำระ</option><option value="goods">ค่าสินค้า/บริการค้างชำระ</option></select></div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div><label class="block font-semibold text-stone-800 dark:text-stone-200 mb-1" for="nt-sender">ชื่อผู้ส่ง (เจ้าหนี้)</label><input class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2.5 text-stone-900 dark:text-stone-100 text-xs font-sans intake-input focus:outline-none" id="nt-sender" type="text" autocomplete="off"/></div>
+<div><label class="block font-semibold text-stone-800 dark:text-stone-200 mb-1" for="nt-recipient">ชื่อผู้รับ (ลูกหนี้)</label><input class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2.5 text-stone-900 dark:text-stone-100 text-xs font-sans intake-input focus:outline-none" id="nt-recipient" type="text" autocomplete="off"/></div>
+</div>
+<div><label class="block font-semibold text-stone-800 dark:text-stone-200 mb-1" for="nt-address">ที่อยู่ผู้รับ</label><input class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2.5 text-stone-900 dark:text-stone-100 text-xs font-sans intake-input focus:outline-none" id="nt-address" type="text" autocomplete="off"/></div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+<div><label class="block font-semibold text-stone-800 dark:text-stone-200 mb-1" for="nt-amount">จำนวนเงิน (บาท)</label><input class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2.5 text-stone-900 dark:text-stone-100 text-xs font-sans intake-input focus:outline-none" id="nt-amount" type="number" min="0" inputmode="decimal"/></div>
+<div><label class="block font-semibold text-stone-800 dark:text-stone-200 mb-1" for="nt-date">วันที่เกิดหนี้</label><input class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2.5 text-stone-900 dark:text-stone-100 text-xs font-sans intake-input focus:outline-none" id="nt-date" type="date"/></div>
+<div><label class="block font-semibold text-stone-800 dark:text-stone-200 mb-1" for="nt-due">วันครบกำหนดชำระ</label><input class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2.5 text-stone-900 dark:text-stone-100 text-xs font-sans intake-input focus:outline-none" id="nt-due" type="date"/></div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div><label class="block font-semibold text-stone-800 dark:text-stone-200 mb-1" for="nt-days">ให้ชำระภายใน (วัน)</label><input class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2.5 text-stone-900 dark:text-stone-100 text-xs font-sans intake-input focus:outline-none" id="nt-days" type="number" min="7" value="15"/></div>
+<div><label class="block font-semibold text-stone-800 dark:text-stone-200 mb-1" for="nt-pay">ช่องทางชำระ</label><input class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2.5 text-stone-900 dark:text-stone-100 text-xs font-sans intake-input focus:outline-none" id="nt-pay" type="text" placeholder="เช่น โอนเข้าบัญชี..." autocomplete="off"/></div>
+</div>
+<div><label class="block font-semibold text-stone-800 dark:text-stone-200 mb-1" for="nt-rate">ดอกเบี้ย (ร้อยละต่อปี) <span class="font-normal text-stone-500">ไม่บังคับ ใส่เฉพาะที่ตกลงไว้หรือตามกฎหมาย</span></label><input class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2.5 text-stone-900 dark:text-stone-100 text-xs font-sans intake-input focus:outline-none" id="nt-rate" type="number" min="0" step="0.01" inputmode="decimal" placeholder="เช่น 5"/></div>
+<button class="w-full bg-stone-900 dark:bg-white hover:bg-orange-600 dark:hover:bg-orange-500 text-white dark:text-stone-950 font-bold py-2.5 rounded-xl text-xs transition shadow-sm" onclick="buildNotice()">สร้างร่างหนังสือ</button>
+<p class="text-[11px] text-stone-500 dark:text-stone-400 leading-relaxed">ส่งทางไปรษณีย์ลงทะเบียนตอบรับ เก็บใบเสร็จและใบตอบรับ ถ่ายสำเนาไว้ และห้ามใส่คำด่าทอหรือข่มขู่ เพราะอาจกลายเป็นความผิดเสียเอง</p>
+</div>
+<div>
+<label class="block font-semibold text-stone-800 dark:text-stone-200 mb-1 text-xs" for="nt-output">ร่างหนังสือ (แก้ไขได้ก่อนคัดลอก)</label>
+<textarea class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2.5 text-stone-900 dark:text-stone-100 text-xs font-sans intake-input focus:outline-none h-80 leading-relaxed" id="nt-output" placeholder="กรอกข้อมูลทางซ้าย แล้วกด สร้างร่างหนังสือ"></textarea>
+<div class="flex flex-wrap gap-2 mt-3">
+<button class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition" onclick="copyNotice()">📋 คัดลอก</button>
+<button class="px-4 py-2 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 rounded-xl text-xs font-semibold transition" onclick="saveNotice()">💾 บันทึกไฟล์ .txt</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- PAGE 3: KNOWLEDGE BASE -->
+<section class="py-10 md:py-14 px-4 max-w-6xl mx-auto hidden" id="page-knowledge">
+<div class="mb-10 text-center max-w-2xl mx-auto">
+<span class="px-3 py-1 bg-stone-200 dark:bg-stone-800 text-stone-800 dark:text-stone-200 rounded-full text-xs font-mono font-bold">คลังความรู้</span>
+<h2 class="text-3xl sm:text-4xl font-extrabold text-stone-950 dark:text-stone-50 mt-3 font-display">คลังความรู้กฎหมายประชาชน</h2>
+<p class="text-stone-600 dark:text-stone-300 text-sm mt-2 font-light">คู่มือภาษาคน เข้าใจง่าย สรุปคำพิพากษาฎีกาสำคัญที่คนทั่วไปมักเข้าใจผิด</p>
+</div>
+<div class="max-w-2xl mx-auto mb-8">
+<label class="sr-only" for="kb-search">ค้นหาในคลังความรู้</label>
+<input class="w-full bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-4 py-2.5 text-sm text-stone-900 dark:text-stone-100 intake-input focus:outline-none" id="kb-search" type="search" placeholder="ค้นหา เช่น แชต โพสต์ประจาน มรดก" autocomplete="off" oninput="filterKb()"/>
+<div class="flex flex-wrap gap-1.5 mt-3 justify-center" id="kb-chips"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="kb-grid">
+<div class="paper-card kb-card rounded-2xl p-6 sm:p-7">
+<span class="text-xs font-mono text-orange-600 dark:text-orange-500 font-bold">หมวดหนี้สินและกู้ยืม</span>
+<h3 class="font-extrabold text-lg text-stone-950 dark:text-stone-100 mt-1 mb-3">แชต Facebook / LINE ถือเป็นหลักฐานกู้เงินได้หรือไม่?</h3>
+<p class="text-xs text-stone-600 dark:text-stone-400 leading-relaxed mb-4">
+          ตาม พ.ร.บ. ธุรกรรมทางอิเล็กทรอนิกส์ฯ ข้อความแชตที่มีการตกลงกู้ยืมเงิน พร้อมสลิปโอนเงิน ถือเป็นหลักฐานการกู้ยืมเงินเป็นหนังสือ สามารถฟ้องร้องบังคับคดีได้ตามประมวลกฎหมายแพ่งและพาณิชย์มาตรา 653 โดยไม่ต้องเซ็นสัญญากระดาษ
+        </p>
+<div class="bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-3 text-[11px] font-mono text-stone-500 dark:text-stone-400">
+          💡 ข้อควรระวัง: อย่าลบแชต และควรถ่ายภาพหน้าจอให้เห็นชื่อบัญชีผู้ใช้และ URL ชัดเจน
+        </div>
+</div>
+<div class="paper-card kb-card rounded-2xl p-6 sm:p-7">
+<span class="text-xs font-mono text-blue-600 dark:text-blue-400 font-bold">หมวด พ.ร.บ. คอมพิวเตอร์</span>
+<h3 class="font-extrabold text-lg text-stone-950 dark:text-stone-100 mt-1 mb-3">โพสต์ประจานคนโกง ทำไมกลายเป็นคนโดนฟ้อง?</h3>
+<p class="text-xs text-stone-600 dark:text-stone-400 leading-relaxed mb-4">
+          แม้เขาจะโกงจริง แต่การนำชื่อ รูปถ่าย หรือบัตรประชาชนของเขาไปโพสต์ด่าในที่สาธารณะ เข้าข่ายความผิดฐานหมิ่นประมาทโดยการโฆษณา (ป.อ. มาตรา 328) โทษจำคุกสูงสุด 2 ปี หรือปรับไม่เกิน 200,000 บาท ซึ่งเป็นความผิดต่อส่วนตัว (ยอมความได้) แต่หากศาลพิพากษาลงโทษจะมีประวัติอาญาติดตัว
+        </p>
+<div class="bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-3 text-[11px] font-mono text-stone-500 dark:text-stone-400">
+          💡 วิธีที่ถูกต้อง: แจ้งความร้องทุกข์ต่อพนักงานสอบสวนหรือยื่นฟ้องต่อศาลโดยตรง
+        </div>
+</div>
+<div class="paper-card kb-card rounded-2xl p-6 sm:p-7">
+<span class="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">หมวดคดีผู้บริโภค</span>
+<h3 class="font-extrabold text-lg text-stone-950 dark:text-stone-100 mt-1 mb-3">ซื้อของออนไลน์แล้วไม่ได้ของ ต้องทำอย่างไร?</h3>
+<p class="text-xs text-stone-600 dark:text-stone-400 leading-relaxed mb-4">
+          สามารถแจ้งความผ่านศูนย์ปราบปรามอาชญากรรมทางเทคโนโลยีสารสนเทศ (thaipoliceonline.com) ภายใน 3 เดือนนับแต่รู้ตัว และสามารถยื่นฟ้องคดีผู้บริโภคออนไลน์ได้ด้วยตนเองโดยไม่ต้องมีทนายความและไม่ต้องเสียค่าธรรมเนียมศาล
+        </p>
+<div class="bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-3 text-[11px] font-mono text-stone-500 dark:text-stone-400">
+          💡 ช่องทาง: ยื่นฟ้องผ่านระบบ e-Filing คดีผู้บริโภคของศาลยุติธรรม
+        </div>
+</div>
+<div class="paper-card kb-card rounded-2xl p-6 sm:p-7">
+<span class="text-xs font-mono text-stone-600 dark:text-stone-400 font-bold">หมวดมรดกและครอบครัว</span>
+<h3 class="font-extrabold text-lg text-stone-950 dark:text-stone-100 mt-1 mb-3">หนี้ของพ่อแม่ ลูกต้องชดใช้แทนหรือไม่?</h3>
+<p class="text-xs text-stone-600 dark:text-stone-400 leading-relaxed mb-4">
+          ตาม ป.พ.พ. ทายาทไม่ต้องรับผิดชอบในหนี้สินของเจ้ามรดกเกินกว่าทรัพย์มรดกที่ตนได้รับ หากพ่อแม่ไม่มีทรัพย์สินตกทอด เจ้าหนี้ไม่สามารถมาบังคับยึดทรัพย์ส่วนตัวของลูกได้
+        </p>
+<div class="bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-3 text-[11px] font-mono text-stone-500 dark:text-stone-400">
+          💡 อายุความ: เจ้าหนี้ต้องฟ้องร้องภายใน 1 ปี นับแต่ได้รู้ถึงความตายของเจ้ามรดก
+        </div>
+</div>
+</div>
+<p class="hidden text-center text-sm text-stone-500 dark:text-stone-400 mt-8" id="kb-empty">ไม่พบหัวข้อที่ตรงกับคำค้น ลองใช้คำอื่นหรือเลือก "ทั้งหมด"</p>
+</section>
+<!-- PAGE 4: ABOUT US -->
+<section class="py-10 md:py-14 px-4 max-w-4xl mx-auto hidden" id="page-about">
+<div class="paper-card rounded-3xl p-8 sm:p-12 text-center border">
+<div class="w-16 h-16 rounded-2xl bg-orange-600 text-white flex items-center justify-center font-black text-2xl mx-auto mb-6 shadow-md font-display">§</div>
+<h2 class="text-3xl sm:text-4xl font-extrabold text-stone-950 dark:text-stone-50 font-display">เกี่ยวกับโครงการ lawรัย</h2>
+<p class="text-sm text-stone-600 dark:text-stone-300 max-w-xl mx-auto mt-4 leading-relaxed font-light">
+        "ทุกการรอมีความหมาย" เราคือแพลตฟอร์มทดลองทางกฎหมายสัญชาติไทย ที่ตั้งเป้าหมายย่อยกฎหมายที่ซับซ้อนให้กลายเป็นเครื่องมือที่ประชาชนหยิบจับได้ทันที ก่อนที่สิทธิจะหลุดมือไปเพราะความไม่รู้
+      </p>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-6 my-10 text-left">
+<div class="p-4 bg-stone-50 dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800">
+<div class="text-orange-600 dark:text-orange-500 font-mono font-bold text-xs mb-1">ชัดเจน</div>
+<h4 class="font-bold text-stone-900 dark:text-stone-100 text-sm mb-1">ภาษาคน ไม่อ้อมค้อม</h4>
+<p class="text-xs text-stone-600 dark:text-stone-400">แปลข้อกฎหมายยากๆ ให้เข้าใจใน 1 นาที</p>
+</div>
+<div class="p-4 bg-stone-50 dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800">
+<div class="text-blue-600 dark:text-blue-400 font-mono font-bold text-xs mb-1">ประชาชนก่อน</div>
+<h4 class="font-bold text-stone-900 dark:text-stone-100 text-sm mb-1">เข้าถึงฟรีทุกฟังก์ชัน</h4>
+<p class="text-xs text-stone-600 dark:text-stone-400">ไม่มีกำแพงค่าบริการ สำหรับการเช็กสิทธิเบื้องต้น</p>
+</div>
+<div class="p-4 bg-stone-50 dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800">
+<div class="text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs mb-1">ตรวจสอบได้</div>
+<h4 class="font-bold text-stone-900 dark:text-stone-100 text-sm mb-1">อ้างอิงมาตราจริง</h4>
+<p class="text-xs text-stone-600 dark:text-stone-400">ทุกข้อสรุปมีมาตราตามประมวลกฎหมายรองรับ</p>
+</div>
+</div>
+<div class="border-t border-stone-200 dark:border-stone-800 pt-6 text-xs text-stone-500 dark:text-stone-400 font-mono">
+        DISCLAIMER: แพลตฟอร์มนี้เป็นเครื่องมือช่วยวิเคราะห์ข้อมูลเบื้องต้น มิใช่การให้คำปรึกษาทางกฎหมายโดยตรงจากทนายความ (Non-Lawyer Legal Tech Aid)
+      </div>
+</div>
+</section>
+</main>
+<!-- ========================================== -->
+<!-- PRE-ISSUE TRIAGE INTAKE & TICKET MODAL -->
+<!-- ========================================== -->
+<div class="fixed inset-0 z-50 bg-stone-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden overflow-y-auto" id="ticket-modal" role="dialog" aria-modal="true" aria-label="บัตรคิวสรุปเหตุการณ์">
+<div class="relative w-full max-w-2xl bg-[#EEF0EA] dark:bg-[#141929] border border-stone-300 dark:border-stone-700 rounded-3xl shadow-2xl p-6 sm:p-8 my-8 text-stone-900 dark:text-stone-100 transition-colors">
+<!-- Modal Close Button -->
+<button class="absolute top-4 right-4 w-9 h-9 rounded-full bg-stone-200/80 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 flex items-center justify-center font-bold text-sm transition" onclick="closeTicketModal()" aria-label="ปิดหน้าต่าง">
+      ✕
+    </button>
+<!-- STEP 1: INTAKE FORM (When ticket hasn't been torn yet) -->
+<div id="intake-step">
+<div class="flex items-center gap-3 mb-5 border-b border-stone-200 dark:border-stone-800 pb-4">
+<div class="w-10 h-10 rounded-xl bg-orange-600 text-white flex items-center justify-center text-xl font-bold">🎟️</div>
+<div>
+<h3 class="font-extrabold text-xl sm:text-2xl text-stone-950 dark:text-stone-50 font-display">ระบบย่อเรื่อง &amp; ฉีกบัตรคิววิเคราะห์ข้อพิพาท</h3>
+<p class="text-xs text-stone-500 dark:text-stone-400 font-mono">PRE-ISSUE LEGAL INTAKE &amp; DISPENSER</p>
+</div>
+</div>
+<p class="text-xs text-stone-600 dark:text-stone-400 mb-5 leading-relaxed">
+        พิมพ์เล่าเรื่องราวของคุณ หรือเลือกกรณีตัวอย่างเพื่อจำลองระบบ AI สรุปประเด็นคดี พร้อมอนิเมชันเสียงฉีกตั๋วกระดาษจริงเพื่อบันทึกเป็นหลักฐาน
+      </p>
+<!-- Quick Template Presets -->
+<div class="mb-4">
+<span class="block text-[11px] font-mono text-stone-500 dark:text-stone-400 uppercase font-semibold mb-2">เคสตัวอย่างด่วน (คลิกเพื่อโหลดข้อความ):</span>
+<div class="flex flex-wrap gap-1.5">
+<button class="px-2.5 py-1 rounded-lg bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 hover:border-orange-500 dark:hover:border-orange-500 text-stone-700 dark:text-stone-300 text-xs transition" onclick="loadSamplePreset('loan')">
+            💸 เพื่อนยืมเงิน 50,000 ผ่านแชต
+          </button>
+<button class="px-2.5 py-1 rounded-lg bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 hover:border-orange-500 dark:hover:border-orange-500 text-stone-700 dark:text-stone-300 text-xs transition" onclick="loadSamplePreset('shop')">
+            📦 สั่งไอโฟนได้กล่องเปล่า
+          </button>
+<button class="px-2.5 py-1 rounded-lg bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 hover:border-orange-500 dark:hover:border-orange-500 text-stone-700 dark:text-stone-300 text-xs transition" onclick="loadSamplePreset('defamation')">
+            ⚠️ โดนเอารูปไปโพสต์ประจาน
+          </button>
+</div>
+</div>
+<!-- Incident Input Form -->
+<div class="space-y-4">
+<div>
+<label class="block text-xs font-semibold text-stone-800 dark:text-stone-200 mb-1">สรุปหัวเรื่องข้อพิพาท</label>
+<input class="w-full bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3.5 py-2.5 text-xs text-stone-900 dark:text-stone-100 intake-input focus:outline-none" id="input-ticket-title" placeholder="เช่น เพื่อนยืมเงินไม่คืน หรือ สั่งซื้อสินค้าแล้วไม่ได้ของ" type="text" value="เพื่อนยืมเงิน 50,000 บาทแล้วบล็อกแชตหนี"/>
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-800 dark:text-stone-200 mb-1">รายละเอียดเหตุการณ์โดยสังเขป (วัน เวลา พฤติการณ์)</label>
+<textarea class="w-full bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3.5 py-2.5 text-xs text-stone-900 dark:text-stone-100 intake-input focus:outline-none h-24" id="input-ticket-desc" placeholder="เล่าเรื่องที่เกิดขึ้น เช่น โอนเงินให้เมื่อวันที่... มีแชตตกลงว่าจะคืนสิ้นเดือน...">โอนเงินผ่านโมบายแบงก์กิ้งให้เพื่อนร่วมงาน 50,000 บาท เมื่อวันที่ 10 มกราคม 2568 นัดคืนสิ้นเดือน ม.ค. พอถึงกำหนดบ่ายเบี่ยงแล้วบล็อกเบอร์โทรและ Facebook มีหลักฐานสลิปโอนเงินและแชตคุยกันครบ</textarea>
+<p class="text-[11px] text-stone-500 dark:text-stone-400 mt-1">🔒 ข้อความจะถูกส่งให้ AI วิเคราะห์ อย่ากรอกเลขบัตรประชาชน เลขบัญชี หรือชื่อจริงของคู่กรณี</p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+<div>
+<label class="block font-semibold text-stone-800 dark:text-stone-200 mb-1">หมวดคดีที่คาดว่าเกี่ยวข้อง</label>
+<select class="w-full bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2 text-stone-800 dark:text-stone-100 intake-input focus:outline-none" id="input-ticket-type">
+<option value="debt">แพ่ง: สัญญากู้ยืมเงิน / ผิดนัดชำระหนี้</option>
+<option value="fraud">อาญา: ฉ้อโกง / พ.ร.บ. คอมพิวเตอร์</option>
+<option value="consumer">ผู้บริโภค: หลอกขายสินค้าออนไลน์</option>
+<option value="tort">ละเมิด: อุบัติเหตุ / ทำของเสียหาย</option>
+<option value="defend">ตั้งรับ: เสี่ยงถูกฟ้อง / ถูกกล่าวหา</option>
+</select>
+</div>
+<div>
+<label class="block font-semibold text-stone-800 dark:text-stone-200 mb-1">ระดับความเร่งด่วน</label>
+<select class="w-full bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2 text-stone-800 dark:text-stone-100 intake-input focus:outline-none" id="input-ticket-urgency">
+<option value="high">🔴 ด่วนมาก (ใกล้ขาดอายุความ / เสี่ยงปิดบัญชี)</option>
+<option selected="" value="med">🟡 ปานกลาง (อยู่ระหว่างติดตามทวงถาม)</option>
+<option value="low">🟢 ทั่วไป (เพิ่งเกิดเรื่องไม่นาน)</option>
+</select>
+</div>
+</div>
+<div class="hidden rounded-xl border border-stone-200 dark:border-stone-800 p-3" id="ticket-history"></div>
+<div class="pt-3">
+<button class="w-full bg-stone-950 dark:bg-stone-100 hover:bg-orange-600 dark:hover:bg-orange-500 text-white dark:text-stone-950 font-bold py-3 rounded-2xl text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-lg group" onclick="generateAndDispenseTicket()">
+<span>🎟️</span>
+<span>ประมวลผลข้อกฎหมาย &amp; กดฉีกตั๋วคิวด่วน</span>
+<span class="group-hover:translate-x-1 transition-transform">→</span>
+</button>
+</div>
+</div>
+</div>
+<!-- STEP 2: DISPENSED PHYSICAL TICKET WITH TEARING PHYSICS -->
+<div class="hidden" id="dispensed-step">
+<div class="text-center mb-4">
+<span class="inline-block px-3 py-1 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 rounded-full text-xs font-mono font-bold border border-emerald-200 dark:border-emerald-800">
+          ✓ TICKET DISPENSED &amp; PARSED
+        </span>
+<h4 class="text-lg font-bold text-stone-900 dark:text-stone-100 mt-2">ตั๋วคิวสรุปผลทางกฎหมายของคุณพร้อมแล้ว</h4>
+<p class="text-xs text-stone-500 dark:text-stone-400 font-mono">กดปุ่ม "ฉีกตั๋ว (Tear Ticket)" เพื่อแยกสลิปพกพาออกจากเครื่อง</p>
+</div>
+<!-- PHYSICAL TICKET DISPENSER CONTAINER -->
+<div class="relative max-w-md mx-auto my-4 perspective-1000">
+<!-- Slot Mouth (Machine Housing) -->
+<div class="bg-stone-900 dark:bg-black h-5 rounded-t-xl border-x-4 border-t-4 border-stone-700 dark:border-stone-800 shadow-inner relative z-30 flex items-center justify-center">
+<div class="w-3/4 h-1 bg-black dark:bg-stone-900 rounded-full shadow-lg"></div>
+</div>
+<!-- Upper Ticket Stub (Machine attached) -->
+<div class="bg-white dark:bg-[#1C2236] border-x border-stone-300 dark:border-stone-700 px-6 pt-3 pb-1 shadow-sm text-center relative z-20" id="ticket-stub-top">
+<div class="flex items-center justify-between text-[10px] font-mono text-stone-400 dark:text-stone-400">
+<span>TICKET DISPENSER UNIT // 01</span>
+<span id="ticket-timestamp">2025-05-12 14:32:01</span>
+</div>
+<div class="border-b-2 border-dashed border-stone-400 dark:border-stone-600 my-2 relative">
+<span class="absolute left-1/2 -top-2.5 -translate-x-1/2 bg-white dark:bg-[#1C2236] px-2 text-[9px] font-mono text-stone-500 dark:text-stone-400 tracking-wider">TEAR HERE (รอยปรุ)</span>
+</div>
+</div>
+<!-- Lower Printable Ticket Body (Tearable element) -->
+<div class="bg-white dark:bg-[#1C2236] border-x border-b border-stone-300 dark:border-stone-700 p-6 rounded-b-2xl shadow-xl relative z-10 transition-transform origin-top text-stone-900 dark:text-stone-100" id="tearable-ticket-body">
+<!-- Jagged Perforation Edge Visual -->
+<div class="h-2 jagged-edge-top -mt-6 mb-4 w-full opacity-60"></div>
+<div class="flex items-start justify-between border-b border-stone-200 dark:border-stone-700 pb-3 mb-4">
+<div>
+<span class="text-[10px] font-mono font-bold text-orange-600 dark:text-orange-500 tracking-wider">OFFICIAL INTAKE SLIP</span>
+<h5 class="text-xl font-extrabold text-stone-950 dark:text-stone-50 font-display" id="slip-queue-number">Q-LAW-782</h5>
+</div>
+<div class="text-right">
+<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700" id="slip-badge-type">CIVIL / DEBT</span>
+<p class="text-[10px] font-mono text-stone-400 dark:text-stone-400 mt-1" id="slip-statute">ป.พ.พ. ม.653</p>
+</div>
+</div>
+<!-- Parsed Content -->
+<div class="space-y-3 text-xs mb-5 font-sans">
+<div>
+<span class="text-[10px] font-mono text-stone-400 dark:text-stone-400 block uppercase">ประเด็นข้อพิพาท:</span>
+<p class="font-bold text-stone-900 dark:text-stone-100 text-sm" id="slip-title">เพื่อนยืมเงิน 50,000 บาทแล้วบล็อกแชตหนี</p>
+</div>
+<div class="bg-stone-50 dark:bg-stone-900/80 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
+<span class="text-[10px] font-mono text-stone-500 dark:text-stone-400 block uppercase font-semibold mb-1">ข้อแนะนำและขั้นตอนต่อไป (Next Action):</span>
+<p class="text-stone-700 dark:text-stone-300 leading-relaxed text-[11px]" id="slip-action">
+                1. รวบรวมสลิปและบันทึกแชตก่อนถูกลบ<br/>
+                2. ส่งหนังสือบอกกล่าวทวงถาม (Notice) กำหนดเวลา 7-15 วัน<br/>
+                3. หากไม่ชำระ สามารถยื่นฟ้องคดีผู้บริโภคหรือคดีแพ่งสามัญได้ มีอายุความ 10 ปี
+              </p>
+</div>
+<div class="flex items-center justify-between text-[11px] font-mono bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/80 p-2.5 rounded-lg text-orange-900 dark:text-orange-200">
+<span>สถานะอายุความ:</span>
+<span class="font-bold" id="slip-expiry-status">เหลือเวลา 9 ปี 8 เดือน</span>
+</div>
+</div>
+<p class="text-[10px] font-mono text-stone-500 dark:text-stone-400 mb-3" id="slip-ai-note" aria-live="polite"></p>
+<!-- Barcode simulation -->
+<div class="pt-2 border-t border-stone-200 dark:border-stone-700 text-center">
+<div class="h-9 w-full barcode-lines rounded mb-1.5 opacity-80"></div>
+<div class="text-[9px] font-mono text-stone-400 dark:text-stone-400 tracking-widest" id="slip-barcode-text">*TH-LAW-88371-2025*</div>
+</div>
+</div>
+</div>
+<!-- Action Buttons for Ticket -->
+<div class="flex flex-wrap gap-2.5 justify-center mt-6">
+<button class="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-md" id="btn-tear-action" onclick="performTearPhysics()">
+<span>✂️</span>
+<span>คลิกเพื่อฉีกตั๋ว (Tear Off)</span>
+</button>
+<button class="px-4 py-2.5 bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 font-semibold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm" onclick="printOrSaveTicket()">
+<span>🖨️</span>
+<span>พิมพ์ตั๋ว (Print)</span>
+</button>
+<button class="px-4 py-2.5 bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 font-semibold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm" onclick="saveTicketText()"><span>💾</span><span>บันทึกเป็นไฟล์ .txt</span></button>
+<button class="px-4 py-2.5 bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 font-semibold rounded-xl text-xs transition" onclick="closeTicketModal(); navigateTo('tools'); setTimeout(()=>document.getElementById('notice-tool').scrollIntoView({behavior:'smooth'}),150)">✉️ ร่างหนังสือทวงถาม</button>
+<button class="px-4 py-2.5 bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-medium rounded-xl text-xs transition" onclick="resetIntakeForm()">
+<span>↺</span>
+<span>สร้างตั๋วใบใหม่</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="border-t border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-950 py-8 px-4 text-xs font-mono text-stone-500 dark:text-stone-400 mt-12 relative z-20 transition-colors">
+<div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-2">
+<span class="font-bold text-stone-900 dark:text-stone-100 font-sans">lawรัย</span>
+<span>•</span>
+<span>ทุกการรอ มีความหมาย</span>
+<span>•</span>
+<span>คัดกรองปัญหากฎหมายแพ่งและอาญาเบื้องต้น</span>
+</div>
+<div class="flex items-center gap-4 text-stone-400 dark:text-stone-500">
+<span>กรุงเทพฯ</span>
+<span>•</span>
+<span>ใช้ฟรี</span>
+</div>
+</div>
+</footer>
+<!-- Interactive Scripts -->
+<script>
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+  const esc = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  // DARK MODE CONTROLLER
+  function applyTheme(isDark) {
+    const html = document.documentElement;
+    const themeIcon = document.getElementById('theme-icon');
+    const themeLabel = document.getElementById('theme-label');
+
+    if (isDark) {
+      html.classList.add('dark');
+      if (themeIcon) themeIcon.innerText = '☀️';
+      if (themeLabel) themeLabel.innerText = 'LIGHT';
+      store.set('lawrai-theme', 'dark');
+    } else {
+      html.classList.remove('dark');
+      if (themeIcon) themeIcon.innerText = '🌙';
+      if (themeLabel) themeLabel.innerText = 'DARK';
+      store.set('lawrai-theme', 'light');
+    }
+    
+    // Refresh active navigation button styles if active
+    updateNavButtonsStyle();
+  }
+
+  function toggleDarkMode() {
+    const isCurrentlyDark = document.documentElement.classList.contains('dark');
+    applyTheme(!isCurrentlyDark);
+    playTone(isCurrentlyDark ? 440 : 660, 'sine', 0.1, 0.15);
+    triggerHaptic('light');
+    showToast(!isCurrentlyDark ? 'เปิดโหมดกลางคืน (Dark Mode) แล้ว 🌙' : 'เปิดโหมดสว่าง (Light Mode) แล้ว ☀️');
+  }
+
+  function initTheme() {
+    const savedTheme = store.get('lawrai-theme');
+    const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+      applyTheme(true);
+    } else {
+      applyTheme(false);
+    }
+  }
+
+  function updateNavButtonsStyle() {
+    const pages = ['home', 'tools', 'knowledge', 'about'];
+    const isDark = document.documentElement.classList.contains('dark');
+    pages.forEach(p => {
+      const btn = document.getElementById('nav-' + p);
+      const isVisible = !document.getElementById('page-' + p)?.classList.contains('hidden');
+      if (btn && isVisible) {
+        btn.className = `px-3.5 py-1.5 rounded-full transition font-semibold ${isDark ? 'text-white bg-stone-800 border-stone-700' : 'text-stone-950 bg-white border-stone-300'} border shadow-sm`;
+      }
+    });
+  }
+
+  // AUDIO SYNTHESIS & SOUND EFFECTS ENGINE (Web Audio API)
+  let audioContext = null;
+  let audioEnabled = true;
+
+  function initAudio() {
+    if (!audioContext) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        audioContext = new AudioCtx();
+      }
+    }
+  }
+
+  function toggleAudio() {
+    audioEnabled = !audioEnabled;
+    const label = document.getElementById('audio-label');
+    const icon = document.getElementById('audio-icon');
+    const led = document.getElementById('audio-led');
+
+    if (audioEnabled) {
+      label.innerText = 'AUDIO ON';
+      icon.innerText = '🔊';
+      led.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500';
+      showToast('เปิดเสียงสังเคราะห์แล้ว 🔊');
+      playTone(587.33, 'triangle', 0.1, 0.15);
+    } else {
+      label.innerText = 'AUDIO MUTED';
+      icon.innerText = '🔇';
+      led.className = 'w-1.5 h-1.5 rounded-full bg-stone-400';
+      showToast('ปิดเสียงเอฟเฟกต์แล้ว 🔇');
+    }
+  }
+
+  function playTone(freq, type = 'sine', duration = 0.15, volume = 0.2) {
+    if (!audioEnabled) return;
+    try {
+      initAudio();
+      if (!audioContext) return;
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+
+      gain.gain.setValueAtTime(volume, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+
+      osc.start();
+      osc.stop(audioContext.currentTime + duration);
+    } catch (e) {
+      console.warn('Audio playback error:', e);
+    }
+  }
+
+  // Realistic Paper Tearing Sound synthesis
+  function playPaperTearSound() {
+    if (!audioEnabled) return;
+    try {
+      initAudio();
+      if (!audioContext) return;
+      if (audioContext.state === 'suspended') audioContext.resume();
+
+      const bufferSize = audioContext.sampleRate * 0.45;
+      const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const noise = audioContext.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = audioContext.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1400, audioContext.currentTime);
+      filter.Q.setValueAtTime(3.0, audioContext.currentTime);
+
+      const gain = audioContext.createGain();
+      gain.gain.setValueAtTime(0.35, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.45);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioContext.destination);
+
+      noise.start();
+    } catch (e) {
+      console.warn('Paper tear sound err:', e);
+    }
+  }
+
+  // Haptic Feedback for Mobile devices
+  function triggerHaptic(type = 'light') {
+    if ('vibrate' in navigator) {
+      try {
+        if (type === 'light') navigator.vibrate(20);
+        else if (type === 'medium') navigator.vibrate([40, 30, 40]);
+        else if (type === 'tear') navigator.vibrate([50, 40, 80]);
+      } catch (err) {}
+    }
+  }
+
+  // Toast System
+  function showToast(message, icon = '✨') {
+    const toast = document.getElementById('app-toast');
+    const toastText = document.getElementById('toast-text');
+    const toastIcon = document.getElementById('toast-icon');
+    if (!toast) return;
+
+    toastText.innerText = message;
+    toastIcon.innerText = icon;
+    toast.classList.remove('hidden');
+    toast.classList.remove('toast-anim');
+    void toast.offsetWidth;
+    toast.classList.add('toast-anim');
+
+    setTimeout(() => {
+      toast.classList.add('hidden');
+      toast.classList.remove('toast-anim');
+    }, 3200);
+  }
+
+  // Navigation Logic
+  function showPage(pageId, silent) {
+    const pages = ['home', 'tools', 'knowledge', 'about'];
+    const isDark = document.documentElement.classList.contains('dark');
+    pages.forEach(p => {
+      const el = document.getElementById('page-' + p);
+      const btn = document.getElementById('nav-' + p);
+      if (el) {
+        if (p === pageId) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      }
+      if (btn) {
+        if (p === pageId) {
+          btn.className = `px-3.5 py-1.5 rounded-full transition font-semibold ${isDark ? 'text-white bg-stone-800 border-stone-700' : 'text-stone-950 bg-white border-stone-300'} border shadow-sm`;
+        } else {
+          btn.className = 'px-3.5 py-1.5 rounded-full transition text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200/50 dark:hover:bg-stone-800/60';
+        }
+      }
+    });
+
+    if (!silent) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      playTone(440, 'sine', 0.08, 0.1);
+    }
+    const t = { home: 'lawรัย — ตรวจอายุความและประเมินความเสี่ยงทางกฎหมายเบื้องต้น', tools: 'เครื่องมือกฎหมาย | lawรัย', knowledge: 'คลังความรู้ | lawรัย', about: 'เกี่ยวกับเรา | lawรัย' };
+    document.title = t[pageId] || t.home;
+  }
+  const validPage = () => { const h = (location.hash || '').slice(1); return ['home','tools','knowledge','about'].includes(h) ? h : 'home'; };
+  function navigateTo(pageId) {
+    try { if (location.hash !== '#' + pageId) { location.hash = pageId; return; } } catch (e) {}
+    showPage(pageId);
+  }
+  window.addEventListener('hashchange', () => showPage(validPage()));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTicketModal(); });
+
+  // Bauhaus Traffic Light Selector
+  const signalData = {
+    red: {
+      badge: 'สัญญาณไฟสีแดง // RED HAZARD',
+      badgeClass: 'bg-red-100 dark:bg-red-950/70 text-red-700 dark:text-red-300 border-red-200 dark:border-red-900/60',
+      risk: 'CRITICAL: 95%',
+      title: '🔴 สัญญาณไฟสีแดง: ต้องหยุดรถทันที',
+      meaning: 'ผู้ขับขี่ต้องหยุดรถหลัง "เส้นแนวหยุดรถ" ห้ามขับรถผ่านเส้นหยุดรถ การฝ่าฝืนมีโทษปรับและอาจถูกตัดคะแนนความประพฤติ',
+      boxClass: 'bg-red-50/80 dark:bg-red-950/30 border-red-200 dark:border-red-900/50',
+      penaltyLabel: '⚠️ บทลงโทษและผลทางคดี (LEGAL CONSEQUENCE)',
+      penaltyLabelColor: 'text-red-700 dark:text-red-400',
+      penaltyLaw: 'พ.ร.บ. จราจรทางบก มาตรา 22',
+      penaltyText: 'ปรับไม่เกิน 1,000 บาท และอาจถูกตัดคะแนนความประพฤติตามเกณฑ์ของกรมการขนส่งทางบก หากเกิดอุบัติเหตุ ฝ่ายที่ฝ่าฝืนสัญญาณมักเสี่ยงต้องรับผิดมากกว่า',
+      freq: 260
+    },
+    yellow: {
+      badge: 'สัญญาณไฟสีเหลือง // CAUTION NOTICE',
+      badgeClass: 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900/60',
+      risk: 'EVALUATION: 60%',
+      title: '🟡 สัญญาณไฟสีเหลืองอำพัน: เตรียมหยุดรถ',
+      meaning: 'ผู้ขับขี่ต้องเตรียมหยุดรถหลังเส้นแนวหยุดรถ เว้นแต่รถได้แล่นเลยเส้นหยุดรถหรืออยู่ในระยะกระชั้นชิดจนไม่สามารถหยุดได้อย่างปลอดภัย จึงจะขับผ่านไปได้',
+      boxClass: 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50',
+      penaltyLabel: '⚠️ ข้อพิจารณาความรับผิด (LIABILITY TEST)',
+      penaltyLabelColor: 'text-amber-800 dark:text-amber-400',
+      penaltyLaw: 'พ.ร.บ. จราจรทางบก มาตรา 22',
+      penaltyText: 'หากฝ่าไฟเหลืองทั้งที่อยู่ในวิสัยหยุดรถได้ทัน ถือว่าฝ่าฝืนสัญญาณจราจร ปรับไม่เกิน 1,000 บาทเช่นกัน',
+      freq: 390
+    },
+    green: {
+      badge: 'สัญญาณไฟสีเขียว // CLEAR PATH',
+      badgeClass: 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/60',
+      risk: 'SAFE PASSAGE: 10%',
+      title: '🟢 สัญญาณไฟสีเขียว: ขับต่อไปด้วยความระมัดระวัง',
+      meaning: 'ผู้ขับขี่ขับรถไปข้างหน้า เลี้ยวขวา หรือเลี้ยวซ้ายได้ แต่ต้องให้ทางแก่คนเดินเท้าในทางข้ามหรือรถคันอื่นที่กำลังแล่นอยู่ในทางร่วมทางแยกก่อน',
+      boxClass: 'bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50',
+      penaltyLabel: '✅ สิทธิและหน้าที่ตามกฎหมาย (RIGHT OF WAY)',
+      penaltyLabelColor: 'text-emerald-800 dark:text-emerald-400',
+      penaltyLaw: 'พ.ร.บ. จราจรทางบก มาตรา 22',
+      penaltyText: 'แม้จะได้ไฟเขียว หากแล่นเข้าไปแล้วอาจไปกีดขวางการจราจรกลางแยก (แยกติด) ซึ่งอาจมีความผิดฐานขับรถในลักษณะกีดขวางการจราจร',
+      freq: 520
+    }
+  };
+
+  function selectLight(color) {
+    const redBtn = document.getElementById('red-light');
+    const yellowBtn = document.getElementById('yellow-light');
+    const greenBtn = document.getElementById('green-light');
+
+    redBtn.className = 'bauhaus-light w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-stone-800 text-stone-400 font-bold text-xs flex flex-col items-center justify-center border-2 border-stone-700/60 opacity-60 hover:opacity-100 cursor-pointer';
+    yellowBtn.className = 'bauhaus-light w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-stone-800 text-stone-400 font-bold text-xs flex flex-col items-center justify-center border-2 border-stone-700/60 opacity-60 hover:opacity-100 cursor-pointer';
+    greenBtn.className = 'bauhaus-light w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-stone-800 text-stone-400 font-bold text-xs flex flex-col items-center justify-center border-2 border-stone-700/60 opacity-60 hover:opacity-100 cursor-pointer';
+
+    if (color === 'red') redBtn.classList.add('active-red-light');
+    if (color === 'yellow') yellowBtn.classList.add('active-yellow-light');
+    if (color === 'green') greenBtn.classList.add('active-green-light');
+
+    const d = signalData[color];
+    const badge = document.getElementById('light-badge');
+    badge.className = `px-3 py-1 rounded-full text-xs font-bold font-mono border flex items-center gap-1.5 ${d.badgeClass}`;
+    badge.innerHTML = `<span class="w-2 h-2 rounded-full ${color === 'red' ? 'bg-red-600' : color === 'yellow' ? 'bg-amber-500' : 'bg-emerald-500'} live-dot"></span> ${d.badge}`;
+
+    document.getElementById('risk-score-pill').innerText = d.risk;
+    document.getElementById('light-title').innerText = d.title;
+    document.getElementById('light-meaning').innerText = d.meaning;
+
+    const box = document.getElementById('light-penalty-box');
+    box.className = `p-4 sm:p-5 rounded-xl border mb-6 ${d.boxClass}`;
+    const pLabel = document.getElementById('light-penalty-label');
+    pLabel.innerText = d.penaltyLabel;
+    pLabel.className = `text-xs font-mono font-bold ${d.penaltyLabelColor}`;
+    document.getElementById('light-penalty-law').innerText = d.penaltyLaw;
+    document.getElementById('light-penalty').innerText = d.penaltyText;
+
+    triggerHaptic(color === 'red' ? 'medium' : 'light');
+    playTone(d.freq, 'sine', 0.18, 0.25);
+    showToast(`เปลี่ยนเป็น ${color.toUpperCase()} SIGNAL แล้ว`);
+  }
+
+  // PRESCRIPTION CALCULATOR LOGIC
+  const CALC = {
+    tort_general: { y: 1, m: 0, tt: 'tort', label: 'ละเมิดทั่วไป', adv: 'อายุความ 1 ปี นับแต่วันที่รู้ถึงการละเมิดและรู้ตัวผู้ต้องรับผิด (ป.พ.พ. ม.448) แต่ไม่เกิน 10 ปีนับแต่วันทำละเมิด หากการละเมิดเป็นความผิดอาญาด้วย อาจใช้อายุความอาญาที่ยาวกว่า' },
+    debt_loan: { y: 10, m: 0, tt: 'debt', label: 'กู้ยืมเงิน/ผิดนัดชำระหนี้', adv: 'อายุความทั่วไป 10 ปี (ป.พ.พ. ม.193/30) แต่ไม่ควรปล่อยนาน เพราะหลักฐานและพยานอาจสูญหาย ส่วนดอกเบี้ยค้างชำระมีอายุความ 5 ปี' },
+    rent_arrears: { y: 5, m: 0, tt: 'debt', label: 'ค่าเช่าค้างชำระ', adv: 'ค่าเช่าและเงินที่ชำระเป็นงวดมีอายุความ 5 ปี (ป.พ.พ. ม.193/33) นับแต่ถึงกำหนดชำระของแต่ละงวด ไม่ใช่นับจากวันทำสัญญา' },
+    cheque_dishonor: { y: 0, m: 3, tt: 'fraud', label: 'เช็คเด้ง', adv: 'ต้องร้องทุกข์หรือฟ้องภายใน 3 เดือนนับแต่รู้เรื่องความผิดและรู้ตัวผู้กระทำ (ป.วิ.อ. ม.96) ซึ่งมักนับจากวันที่ธนาคารปฏิเสธการจ่ายเงิน ควรยืนยันวันที่กับเอกสารคืนเช็ค' },
+    defamation_criminal: { y: 0, m: 3, tt: 'fraud', label: 'หมิ่นประมาท/พ.ร.บ.คอมฯ', adv: 'ความผิดต่อส่วนตัว ต้องร้องทุกข์ภายใน 3 เดือนนับแต่รู้เรื่องความผิดและรู้ตัวผู้กระทำ (ป.วิ.อ. ม.96) ควรแคปหลักฐานพร้อม URL วันเวลาไว้ก่อน' },
+    fraud_complaint: { y: 0, m: 3, tt: 'fraud', label: 'ฉ้อโกง/ยักยอกทั่วไป', adv: 'ความผิดฐานฉ้อโกง/ยักยอกทั่วไปเป็นความผิดอันยอมความได้ ต้องร้องทุกข์ภายใน 3 เดือนนับแต่รู้เรื่องและรู้ตัวผู้กระทำ (ป.วิ.อ. ม.96) ส่วนอายุความฟ้องคดีสูงสุด 10 ปี (ป.อ. ม.95) คดีฉ้อโกงประชาชนหรือแก๊งคอลเซ็นเตอร์อาจเป็นความผิดต่อแผ่นดิน ให้ถามตำรวจ' },
+    labor_wage: { y: 2, m: 0, tt: 'debt', label: 'ค่าจ้างค้างจ่าย', adv: 'ค่าจ้างค้างจ่ายมีอายุความ 2 ปี (ป.พ.พ. ม.193/34) ส่วนค่าชดเชยเลิกจ้างและสิทธิอื่นอาจต่างกัน ควรสอบถามสำนักงานสวัสดิการและคุ้มครองแรงงานหรือทนาย' }
+  };
+  function addYM(d, y, m) {
+    const r = new Date(d.getFullYear() + y, d.getMonth() + m, 1);
+    r.setDate(Math.min(d.getDate(), new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate()));
+    return r;
+  }
+  function runPrescriptionCalc() {
+    const cat = document.getElementById('calc-category').value;
+    const dateVal = document.getElementById('calc-date').value;
+    const resDate = document.getElementById('res-expiry-date'), resDays = document.getElementById('res-days-left');
+    const resStatus = document.getElementById('res-status-tag'), resAdvice = document.getElementById('res-legal-advice');
+    if (!dateVal) {
+      resDate.innerText = 'โปรดระบุวันที่'; resDays.innerText = '—'; window.lastCalc = null;
+      resStatus.innerText = 'รอข้อมูลวันที่'; resStatus.className = 'font-bold text-stone-400';
+      return;
+    }
+    const c = CALC[cat];
+    const [yy, mm, dd] = dateVal.split('-').map(Number);
+    const start = new Date(yy, mm - 1, dd);
+    const expiry = addYM(start, c.y, c.m);
+    const n = new Date(); const today = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+    const diffDays = Math.round((expiry - today) / 86400000);
+    window.lastExpiry = expiry;
+    window.lastCalc = { days: diffDays, ticketType: c.tt, label: c.label };
+    resDate.innerText = expiry.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+    resAdvice.innerText = c.adv + ' (ผลนี้เป็นการคำนวณโดยประมาณ ควรยืนยันกับทนายความ)';
+    const ymd = (a, b) => { let y = 0, m = 0, cur = a; while (addYM(cur, 1, 0) <= b) { cur = addYM(cur, 1, 0); y++; } while (addYM(cur, 0, 1) <= b) { cur = addYM(cur, 0, 1); m++; } return [y, m, Math.round((b - cur) / 86400000)]; };
+    if (diffDays < 0) {
+      resDays.innerText = `ขาดอายุความแล้ว ${Math.abs(diffDays)} วัน (ควรปรึกษาทนายว่ามีเหตุสะดุดหยุดหรือไม่)`;
+      resStatus.innerText = '⚠️ ขาดอายุความ (EXPIRED)'; resStatus.className = 'font-bold text-red-600 dark:text-red-400';
+    } else {
+      const [y, m, d] = ymd(today, expiry);
+      const txt = [y && `${y} ปี`, m && `${m} เดือน`, (d || (!y && !m)) && `${d} วัน`].filter(Boolean).join(' ');
+      if (diffDays === 0) { resDays.innerText = 'ครบกำหนดวันนี้'; resStatus.innerText = '🔴 วันสุดท้าย (CRITICAL)'; resStatus.className = 'font-bold text-red-600 dark:text-red-400'; }
+      else if (diffDays <= 30) { resDays.innerText = `เหลือ ${txt} (วิกฤต)`; resStatus.innerText = '🔴 ใกล้หมดอายุความ (CRITICAL)'; resStatus.className = 'font-bold text-red-600 dark:text-red-400'; }
+      else if (diffDays <= 90) { resDays.innerText = `เหลือ ${txt} (ควรรีบดำเนินการ)`; resStatus.innerText = '🟡 เริ่มใกล้กำหนด (WARNING)'; resStatus.className = 'font-bold text-amber-600 dark:text-amber-400'; }
+      else { resDays.innerText = `เหลือ ${txt}`; resStatus.innerText = '🟢 อยู่ในกำหนดเวลา (ACTIVE)'; resStatus.className = 'font-bold text-emerald-600 dark:text-emerald-400'; }
+    }
+    playTone(493.88, 'triangle', 0.1, 0.15);
+  }
+
+  async function copyCalcResult() {
+    const g = (id) => document.getElementById(id).innerText;
+    if (!window.lastCalc) { showToast('โปรดเลือกวันที่เพื่อคำนวณก่อน', '⚠️'); return; }
+    const sel = document.getElementById('calc-category');
+    const text = `lawรัย — ผลคำนวณอายุความ (โดยประมาณ)\nประเภท: ${sel.options[sel.selectedIndex].text}\nวันที่เกิดเหตุ/รู้ตัวผู้กระทำ: ${document.getElementById('calc-date').value}\nวันสิ้นสุดอายุความ: ${g('res-expiry-date')}\nสถานะ: ${g('res-status-tag')} — ${g('res-days-left')}\n* ข้อมูลเบื้องต้น ไม่ใช่คำปรึกษาจากทนายความ`;
+    try { await navigator.clipboard.writeText(text); showToast('คัดลอกผลคำนวณแล้ว', '📋'); }
+    catch (e) { showToast('คัดลอกไม่ได้ในเบราว์เซอร์นี้', '⚠️'); }
+  }
+
+  function addToGoogleCalendar() {
+    const resDate = document.getElementById('res-expiry-date').innerText;
+    if (resDate === '—' || resDate.includes('โปรดระบุ')) {
+      showToast('โปรดเลือกวันที่เพื่อคำนวณก่อนบันทึกลงปฏิทิน', '⚠️');
+      return;
+    }
+    const catText = document.getElementById('calc-category').options[document.getElementById('calc-category').selectedIndex].text;
+    const title = encodeURIComponent(`[lawรัย] วันสิ้นสุดอายุความ: ${catText.substring(0, 30)}`);
+    const details = encodeURIComponent(`บันทึกเตือนจากระบบ lawรัย (Thailand Citizen Legal Access)\nประเภท: ${catText}\nวันหมดอายุความโดยประมาณ: ${resDate}\nอย่าลืมยื่นฟ้องหรือทำหนังสือบอกกล่าวล่วงหน้า`);
+    
+    const ex = window.lastExpiry || new Date();
+    const ymd = (d) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    const nx = new Date(ex); nx.setDate(nx.getDate() + 1);
+    const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&dates=${ymd(ex)}/${ymd(nx)}`;
+    window.open(gCalUrl, '_blank');
+    showToast('กำลังเปิด Google Calendar...', '📅');
+  }
+
+  // RISK RADAR EVALUATION
+  const RISK_Q = [
+    { t: 'ท่านตั้งใจจะโพสต์รูปบัตรประชาชนหรือหน้าคู่กรณีลงโซเชียลหรือไม่?', o: [['ไม่ทำ / ปิดข้อมูลส่วนบุคคล', 0], ['ใช่ / วางแผนจะทำ', 3]], why: 'โพสต์ประจานเสี่ยงหมิ่นประมาทโดยการโฆษณา (ป.อ. ม.328)' },
+    { t: 'มีหลักฐานการตกลง สลิป หรือข้อความแชตเป็นลายลักษณ์อักษรหรือไม่?', o: [['มีครบถ้วน ชัดเจน', 0], ['ตกลงปากเปล่า / ไม่มีสลิป', 2]], why: 'ไม่มีหลักฐานทำให้พิสูจน์ข้อกล่าวหาไม่ได้ และเสี่ยงถูกมองว่ากล่าวหาเลื่อนลอย' },
+    { t: 'ได้ส่งหนังสือทวงถาม (Notice) อย่างเป็นทางการแล้วหรือยัง?', o: [['ส่งแล้ว / มีหลักฐานไปรษณีย์', 0], ['ยังไม่ได้ส่ง / ทวงแค่ทางแชต', 1]], why: 'ยังไม่มีการบอกกล่าวเป็นทางการ ควรเริ่มจากหนังสือบอกกล่าวก่อน' },
+    { t: 'ข้อความที่เคยส่งถึงคู่กรณี มีคำด่าทอ หรือขู่ทำร้าย/ขู่เปิดโปงหรือไม่?', o: [['สุภาพ / ไม่มี', 0], ['มี หรือไม่แน่ใจ', 3]], why: 'การขู่เข็ญอาจเป็นความผิดเอง เช่น ข่มขืนใจ (ป.อ. ม.309) หรือหมิ่นประมาท' },
+    { t: 'เคยทวงหนี้โดยติดต่อนายจ้าง ญาติ หรือเพื่อนของคู่กรณีหรือไม่?', o: [['ไม่เคย', 0], ['เคย / กำลังจะทำ', 2]], why: 'การเปิดเผยเรื่องหนี้ต่อบุคคลที่สามเสี่ยงหมิ่นประมาทและละเมิดข้อมูลส่วนบุคคล' }
+  ];
+  function renderRiskForm() {
+    const f = document.getElementById('risk-form');
+    if (!f) return;
+    const defaults = [0, 0, 1, 0, 0];
+    f.innerHTML = RISK_Q.map((q, i) => `<div><label class="block font-semibold text-stone-800 dark:text-stone-200 mb-1">คำถามที่ ${i + 1}: ${esc(q.t)}</label><div class="flex flex-wrap gap-x-4 gap-y-1 mt-1.5">${q.o.map(([lab, pts]) => `<label class="flex items-center gap-2 cursor-pointer text-stone-700 dark:text-stone-300"><input class="text-orange-600 focus:ring-orange-500 bg-white dark:bg-stone-800 border-stone-300 dark:border-stone-600" name="q${i}" type="radio" value="${pts}" ${pts === defaults[i] ? 'checked' : ''} onchange="evaluateRisk()"/> ${esc(lab)}</label>`).join('')}</div></div>`).join('') +
+      `<div class="bg-stone-50 dark:bg-stone-900/60 border border-stone-200 dark:border-stone-800 rounded-xl p-4 mt-4"><div class="flex items-center justify-between text-xs font-mono mb-2"><span class="text-stone-500 dark:text-stone-400">ระดับความเสี่ยงที่ประเมินได้</span><span id="risk-level-tag" class="font-bold px-2 py-0.5 rounded border"></span></div><div class="h-2 w-full bg-stone-200 dark:bg-stone-800 rounded-full overflow-hidden mb-3"><div id="risk-bar" class="h-full transition-all duration-500"></div></div><p id="risk-detail-text" class="text-xs text-stone-700 dark:text-stone-300 leading-relaxed" aria-live="polite"></p><ul id="risk-reasons" class="mt-2 space-y-1 text-[11px] text-stone-600 dark:text-stone-400 list-disc pl-4"></ul><button type="button" id="risk-ticket-btn" class="hidden mt-3 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition" onclick="openTicketDispenser('risk')">🎟️ ออกบัตรคิวแนวทางตั้งรับ</button></div>`;
+    evaluateRisk();
+  }
+  function evaluateRisk() {
+    let score = 0, max = 0; const reasons = [];
+    RISK_Q.forEach((q, i) => {
+      max += Math.max(...q.o.map(x => x[1]));
+      const v = parseInt(document.querySelector(`input[name="q${i}"]:checked`)?.value || '0', 10);
+      score += v; if (v > 0) reasons.push(q.why);
+    });
+    const pct = Math.round(score / max * 100);
+    const tag = document.getElementById('risk-level-tag'), text = document.getElementById('risk-detail-text');
+    const bar = document.getElementById('risk-bar'), ul = document.getElementById('risk-reasons');
+    let lv;
+    if (score >= 6) lv = ['สูงมาก // CRITICAL HAZARD', 'text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-950/70 border-red-200 dark:border-red-800', 'bg-red-600', 'ความเสี่ยงสูงมาก มีโอกาสสูงที่จะถูกฟ้องกลับฐานหมิ่นประมาท ข่มขืนใจ หรือ พ.ร.บ.คอมฯ แนะนำให้หยุดโพสต์หรือทวงด้วยถ้อยคำรุนแรง เก็บหลักฐานทั้งหมด และปรึกษาทนายความทันที'];
+    else if (score >= 3) lv = ['ปานกลาง // MEDIUM RISK', 'text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/70 border-amber-200 dark:border-amber-800', 'bg-amber-500', 'ความเสี่ยงระดับปานกลาง ควรส่งหนังสือบอกกล่าวทวงถามอย่างเป็นทางการก่อนยื่นฟ้อง และไม่นำข้อมูลส่วนบุคคลของคู่กรณีไปเปิดเผยในที่สาธารณะ'];
+    else lv = ['ต่ำ // LOW RISK', 'text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 border-emerald-200 dark:border-emerald-800', 'bg-emerald-600', 'ความเสี่ยงต่ำ ท่านมีหลักฐานและแนวทางที่รัดกุม เตรียมเอกสารเพื่อดำเนินคดีหรือส่งหนังสือทวงถามตามขั้นตอนได้'];
+    tag.className = 'font-bold px-2 py-0.5 rounded border ' + lv[1]; tag.innerText = lv[0];
+    bar.className = 'h-full transition-all duration-500 ' + lv[2]; bar.style.width = Math.max(pct, 6) + '%';
+    text.innerText = lv[3];
+    ul.innerHTML = reasons.map(r => `<li>${esc(r)}</li>`).join('');
+    window.lastRisk = { score, reasons };
+    document.getElementById('risk-ticket-btn')?.classList.toggle('hidden', score < 3);
+  }
+
+  // TICKET MODAL & PRESETS
+  function openTicketDispenser(source = 'default') {
+    const modal = document.getElementById('ticket-modal');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    if (source === 'calc-result' && window.lastCalc) {
+      const c = window.lastCalc;
+      document.getElementById('input-ticket-type').value = c.ticketType;
+      document.getElementById('input-ticket-urgency').value = c.days <= 30 ? 'high' : (c.days <= 90 ? 'med' : 'low');
+      const t = document.getElementById('input-ticket-title');
+      if (!t.value.trim()) t.value = c.label;
+      showToast('ใส่ประเภทคดีและความเร่งด่วนจากผลคำนวณให้แล้ว', '⏱️');
+    }
+    if (source === 'risk' && window.lastRisk) {
+      document.getElementById('input-ticket-type').value = 'defend';
+      document.getElementById('input-ticket-urgency').value = window.lastRisk.score >= 6 ? 'high' : 'med';
+      document.getElementById('input-ticket-title').value = 'ประเมินความเสี่ยงถูกฟ้องกลับ';
+      document.getElementById('input-ticket-desc').value = 'ผลแบบประเมินพบปัจจัยเสี่ยง: ' + window.lastRisk.reasons.join(' / ');
+      showToast('ใส่ผลแบบประเมินความเสี่ยงให้แล้ว', '🚦');
+    }
+    playTone(523.25, 'sine', 0.1, 0.2);
+  }
+
+  function closeTicketModal() {
+    const modal = document.getElementById('ticket-modal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  function loadSamplePreset(type) {
+    const titleInput = document.getElementById('input-ticket-title');
+    const descInput = document.getElementById('input-ticket-desc');
+    const typeSelect = document.getElementById('input-ticket-type');
+    const urgSelect = document.getElementById('input-ticket-urgency');
+
+    if (type === 'loan') {
+      titleInput.value = 'เพื่อนสนิทกู้ยืมเงิน 50,000 บาทแล้วบล็อกแชตหนี';
+      descInput.value = 'โอนเงินผ่าน KBank ให้เพื่อนร่วมงาน 50,000 บาท เมื่อ 10 ม.ค. 2568 นัดคืนสิ้นเดือน ม.ค. พอถึงกำหนดบ่ายเบี่ยงแล้วบล็อกเบอร์โทรและ Facebook มีหลักฐานสลิปโอนเงินและแชตคุยกันครบ';
+      typeSelect.value = 'debt';
+      urgSelect.value = 'med';
+    } else if (type === 'shop') {
+      titleInput.value = 'สั่งซื้อมือถือออนไลน์ 28,000 บาท เปิดกล่องได้ขวดน้ำ';
+      descInput.value = 'สั่งซื้อผ่านเพจ Facebook โอนเงินเต็มจำนวน ได้รับพัสดุเมื่อวาน ถ่ายคลิปตอนแกะกล่องพบขวดน้ำเปล่า ติดต่อเพจไม่ได้ เพจบล็อกหนีทันที';
+      typeSelect.value = 'consumer';
+      urgSelect.value = 'high';
+    } else if (type === 'defamation') {
+      titleInput.value = 'ถูกคู่กรณีนำรูปและข้อมูลส่วนตัวไปโพสต์ด่าประจานในกลุ่ม';
+      descInput.value = 'มีปัญหาส่วนตัวกัน คู่กรณีแคปรูปโปรไฟล์และที่อยู่บ้านไปโพสต์ด่าในกลุ่มสาธารณะคนตามกว่า 2 แสนคน ทำให้เสื่อมเสียชื่อเสียงและมีคนส่งข้อความมาคุกคาม';
+      typeSelect.value = 'fraud';
+      urgSelect.value = 'high';
+    }
+
+    playTone(659.25, 'triangle', 0.08, 0.15);
+    showToast('โหลดข้อความตัวอย่างแล้ว ✨');
+  }
+
+  // TICKET GENERATION AND DISPENSE LOGIC
+  function generateAndDispenseTicket() {
+    const title = document.getElementById('input-ticket-title').value.trim() || 'ข้อพิพาททั่วไป';
+    const desc = document.getElementById('input-ticket-desc').value.trim();
+    const type = document.getElementById('input-ticket-type').value;
+    const urgency = document.getElementById('input-ticket-urgency').value;
+
+    const randomNum = Math.floor(100 + Math.random() * 900);
+    const queueCode = `Q-${type.toUpperCase()}-${randomNum}`;
+    const barcodeCode = `*TH-LAW-${randomNum * 31}-${new Date().getFullYear()}*`;
+
+    document.getElementById('slip-queue-number').innerText = queueCode;
+    document.getElementById('slip-title').innerText = title;
+    document.getElementById('slip-barcode-text').innerText = barcodeCode;
+
+    const now = new Date();
+    const tsStr = now.toLocaleString('sv-SE');
+    document.getElementById('ticket-timestamp').innerText = tsStr;
+
+    const badgeType = document.getElementById('slip-badge-type');
+    const statute = document.getElementById('slip-statute');
+    const action = document.getElementById('slip-action');
+    const expStatus = document.getElementById('slip-expiry-status');
+
+    if (type === 'debt') {
+      badgeType.innerText = 'CIVIL / DEBT (แพ่ง: กู้ยืม)';
+      badgeType.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-orange-100 dark:bg-orange-950/70 text-orange-900 dark:text-orange-200 border border-orange-300 dark:border-orange-800';
+      statute.innerText = 'ป.พ.พ. ม.653';
+      action.innerHTML = '1. บันทึกสำเนาแชตและสลิปเงินเป็นไฟล์ภาพชัดเจน<br/>2. ส่งหนังสือบอกกล่าวทวงถาม (Notice) กำหนดชำระใน 7-15 วัน<br/>3. หากไม่ชำระ สามารถยื่นฟ้องศาลได้ (อายุความ 10 ปี)';
+      expStatus.innerText = 'อายุความ 10 ปี (มีเวลาเตรียมคดี)';
+    } else if (type === 'consumer') {
+      badgeType.innerText = 'CONSUMER ONLINE (ผู้บริโภค)';
+      badgeType.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800';
+      statute.innerText = 'พ.ร.บ. วิธีพิจารณาคดีผู้บริโภค';
+      action.innerHTML = '1. เก็บหลักฐานคลิปแกะกล่อง + สลิป + ลิงก์เพจ<br/>2. แจ้งความออนไลน์ที่ thaipoliceonline.com อายัดบัญชีม้าทันที<br/>3. ยื่นฟ้องคดีผู้บริโภคออนไลน์ (e-Filing) ฟรี ไม่ต้องจ้างทนาย';
+      expStatus.innerText = 'ควรแจ้งความโดยเร็ว (คดีอาญาบางฐานต้องร้องทุกข์ใน 3 เดือน)';
+    } else if (type === 'fraud') {
+      badgeType.innerText = 'CRIMINAL / COMP (อาญา / หมิ่นประมาท)';
+      badgeType.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-100 dark:bg-red-950/70 text-red-900 dark:text-red-200 border border-red-300 dark:border-red-800';
+      statute.innerText = 'ป.อ. ม.328 / พ.ร.บ. คอมฯ';
+      action.innerHTML = '1. แคป URL โพสต์ วันเวลา และคอมเมนต์ทั้งหมด (อย่าเพิ่งโต้ตอบ)<br/>2. นำหลักฐานไปแจ้งความที่ สน. ท้องที่เกิดเหตุ<br/>3. หากเป็นความผิดอันยอมความได้ (เช่น หมิ่นประมาท) ต้องร้องทุกข์ภายใน 3 เดือนนับแต่วันที่รู้เรื่องและรู้ตัวผู้กระทำ';
+      expStatus.innerText = '⚠️ บางฐานความผิดต้องร้องทุกข์ภายใน 3 เดือน';
+    } else if (type === 'defend') {
+      badgeType.innerText = 'DEFENSE (ตั้งรับ / เสี่ยงถูกฟ้อง)';
+      badgeType.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800';
+      statute.innerText = 'ป.อ. ม.326, 328 / พ.ร.บ.คอมฯ';
+      action.innerHTML = '1. หยุดโพสต์หรือส่งข้อความที่รุนแรง และเก็บภาพหน้าจอของสิ่งที่เคยโพสต์ไว้ก่อนแก้ไขหรือลบ<br/>2. อย่าลบหรือทำลายหลักฐานของตัวเอง และอย่าติดต่อข่มขู่คู่กรณี<br/>3. ปรึกษาทนายความหรือสภาทนายความก่อนตอบโต้ หากได้รับหมายหรือหนังสือจากศาล/ตำรวจ ให้ดำเนินการตามกำหนดในเอกสารนั้น';
+      expStatus.innerText = 'หากถูกฟ้องคดีแพ่ง ต้องยื่นคำให้การภายใน 15 วันนับแต่ได้รับสำเนาคำฟ้อง (ป.วิ.พ. ม.177)';
+    } else {
+      badgeType.innerText = 'CIVIL / TORT (ละเมิด)';
+      badgeType.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-100 dark:bg-blue-950/70 text-blue-900 dark:text-blue-200 border border-blue-300 dark:border-blue-800';
+      statute.innerText = 'ป.พ.พ. ม.420 / ม.448';
+      action.innerHTML = '1. ประเมินมูลค่าความเสียหายพร้อมใบเสร็จหรือภาพถ่าย<br/>2. ติดต่อคู่กรณีเจรจาค่าสินไหมทดแทน<br/>3. ฟ้องคดีละเมิดภายใน 1 ปี นับแต่วันรู้ตัวผู้กระทำ';
+      expStatus.innerText = 'อายุความ 1 ปี นับแต่วันรู้ตัว';
+    }
+
+    // Switch view
+    document.getElementById('intake-step').classList.add('hidden');
+    const dispStep = document.getElementById('dispensed-step');
+    dispStep.classList.remove('hidden');
+
+    const ticketBody = document.getElementById('tearable-ticket-body');
+    ticketBody.classList.remove('anim-tearing');
+    ticketBody.classList.remove('anim-dispense');
+    void ticketBody.offsetWidth;
+    ticketBody.classList.add('anim-dispense');
+
+    triggerHaptic('medium');
+    playTone(587.33, 'square', 0.25, 0.2);
+    showToast('ประมวลผลตั๋วคิวสำเร็จ!', '🎟️');
+    saveHistory({ code: queueCode, title, ts: tsStr });
+    runAiAnalysis({ title, desc, type, urgency });
+  }
+
+  const TYPE_LABEL = { debt: 'แพ่ง: กู้ยืม/ผิดนัดชำระหนี้', fraud: 'อาญา: ฉ้อโกง/พ.ร.บ.คอมพิวเตอร์/หมิ่นประมาท', consumer: 'ผู้บริโภค: ซื้อขายออนไลน์', tort: 'ละเมิด: อุบัติเหตุ/ทรัพย์เสียหาย', defend: 'ตั้งรับ: ผู้ใช้เสี่ยงถูกฟ้องกลับหรือถูกกล่าวหา (มองจากฝั่งผู้ถูกกล่าวหา)' };
+  let aiRun = 0;
+  async function runAiAnalysis(d) {
+    const note = document.getElementById('slip-ai-note');
+    const action = document.getElementById('slip-action');
+    const myRun = ++aiRun;
+    let sample = null;
+    try { sample = window.claude ? await window.claude.use('sample') : null; } catch (e) {}
+    if (!sample) { note.textContent = 'ประเมินตามกฎพื้นฐานของระบบ (ยังไม่ได้ใช้ AI)'; return; }
+    note.textContent = '⏳ AI กำลังวิเคราะห์เหตุการณ์ของคุณ...';
+    const today = new Date().toISOString().slice(0, 10);
+    const prompt = `คุณเป็นผู้ช่วยคัดกรองปัญหากฎหมายไทยเบื้องต้นให้ประชาชน (ไม่ใช่ทนายความ)
+วันนี้: ${today} (ค.ศ.)
+หัวเรื่อง: ${d.title}
+หมวดที่ผู้ใช้เลือก: ${TYPE_LABEL[d.type] || d.type}
+ความเร่งด่วนที่ผู้ใช้ประเมิน: ${d.urgency}
+เหตุการณ์: ${d.desc || '(ไม่ได้ระบุ)'}
+
+ตอบเป็น JSON อย่างเดียว ไม่มีข้อความอื่น ตามรูปแบบนี้:
+{"summary":"สรุปประเด็นกฎหมาย 1-2 ประโยค ภาษาง่าย","laws":["กฎหมาย/มาตราที่เกี่ยวข้อง สูงสุด 3 รายการ"],"steps":["ขั้นตอนถัดไปที่ทำได้จริง 3-4 ข้อ เรียงลำดับ"],"deadline":"อายุความหรือกำหนดเวลาสำคัญ 1 ประโยค และคำนวณจากวันที่ในเหตุการณ์ถ้ามี","avoid":"สิ่งที่ไม่ควรทำ 1 ประโยค"}
+กติกา: อ้างเฉพาะมาตราที่มั่นใจ ถ้าไม่แน่ใจให้เขียนชื่อกฎหมายโดยไม่ระบุมาตรา ห้ามแต่งข้อมูล ถ้าข้อมูลไม่พอให้ระบุว่าต้องการข้อมูลอะไรเพิ่ม และปิดท้ายใน deadline ว่าควรยืนยันกับทนายความหรือหน่วยงานรัฐ`;
+    try {
+      const r = await sample.json(prompt);
+      if (myRun !== aiRun) return;
+      const list = (a) => (Array.isArray(a) ? a : []).map(esc);
+      action.innerHTML = `<span class="block font-semibold mb-1">${esc(r.summary)}</span>` +
+        list(r.steps).map((t, i) => `${i + 1}. ${t}<br/>`).join('') +
+        (r.avoid ? `<span class="block mt-1 text-red-700 dark:text-red-300">⚠️ ${esc(r.avoid)}</span>` : '');
+      if (r.deadline) document.getElementById('slip-expiry-status').textContent = r.deadline;
+      const laws = list(r.laws).join(' / ');
+      if (laws) document.getElementById('slip-statute').innerHTML = laws;
+      note.textContent = '✓ วิเคราะห์โดย AI จากข้อความที่คุณกรอก — ใช้เป็นข้อมูลเบื้องต้น ควรยืนยันกับทนายความ';
+    } catch (e) {
+      if (myRun !== aiRun) return;
+      note.textContent = e && e.code === 'not_granted' ? 'ไม่ได้อนุญาตให้ใช้ AI — แสดงผลตามกฎพื้นฐานแทน' : 'AI ใช้งานไม่ได้ในขณะนี้ — แสดงผลตามกฎพื้นฐานแทน';
+    }
+  }
+
+  // Ticket history (per-viewer)
+  function loadHistory() { try { return JSON.parse(store.get('lawrai-tickets') || '[]'); } catch (e) { return []; } }
+  function saveHistory(item) {
+    const h = loadHistory().filter(x => x.code !== item.code);
+    h.unshift(item);
+    store.set('lawrai-tickets', JSON.stringify(h.slice(0, 5)));
+    renderHistory();
+  }
+  function renderHistory() {
+    const box = document.getElementById('ticket-history');
+    const h = loadHistory();
+    if (!box) return;
+    box.classList.toggle('hidden', h.length === 0);
+    box.innerHTML = '<span class="block text-[11px] font-mono text-stone-500 dark:text-stone-400 font-semibold mb-1.5">บัตรคิวล่าสุดของคุณ (เก็บในเครื่องนี้เท่านั้น):</span>' +
+      h.map(x => `<div class="flex items-center justify-between gap-2 text-xs py-1"><span class="truncate"><b class="font-mono">${esc(x.code)}</b> ${esc(x.title)}</span><span class="shrink-0 text-[10px] font-mono text-stone-400">${esc(String(x.ts).slice(0, 10))}</span></div>`).join('');
+  }
+  async function saveTicketText() {
+    const g = (id) => document.getElementById(id).innerText;
+    const text = `lawรัย — บัตรคิวสรุปเหตุการณ์\n${g('slip-queue-number')}  (${g('slip-badge-type')})\nเวลา: ${g('ticket-timestamp')}\n\nประเด็น: ${g('slip-title')}\n\n${g('slip-action')}\n\nอายุความ/กำหนดเวลา: ${g('slip-expiry-status')}\nกฎหมายที่เกี่ยวข้อง: ${g('slip-statute')}\n\n* ข้อมูลเบื้องต้น ไม่ใช่คำปรึกษาจากทนายความ`;
+    try {
+      const dl = window.claude ? await window.claude.use('downloads') : null;
+      if (!dl) throw new Error('no');
+      await dl.save({ filename: `${g('slip-queue-number')}.txt`, data: text });
+    } catch (e) {
+      try { await navigator.clipboard.writeText(text); showToast('คัดลอกข้อความตั๋วแล้ว วางลงโน้ตหรือแชตได้เลย', '📋'); }
+      catch (e2) { showToast('บันทึกไม่ได้ในเบราว์เซอร์นี้ ลองใช้ปุ่มพิมพ์แทน', '⚠️'); }
+    }
+  }
+
+  // REALISTIC TICKET TEARING PHYSICS
+  let isTorn = false;
+
+  function performTearPhysics() {
+    const ticketBody = document.getElementById('tearable-ticket-body');
+    const stubTop = document.getElementById('ticket-stub-top');
+    const btnTear = document.getElementById('btn-tear-action');
+
+    playPaperTearSound();
+    triggerHaptic('tear');
+
+    ticketBody.classList.remove('anim-dispense');
+    ticketBody.classList.remove('anim-tearing');
+    void ticketBody.offsetWidth;
+    ticketBody.classList.add('anim-tearing');
+
+    stubTop.classList.add('anim-stub');
+
+    isTorn = true;
+    btnTear.innerHTML = '<span>✓</span> <span>ฉีกตั๋วสำเร็จแล้ว (TORN)</span>';
+    btnTear.className = 'px-5 py-2.5 bg-stone-800 dark:bg-stone-700 text-stone-300 font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm cursor-default';
+
+    showToast('ฉีกตั๋วออกจากเครื่องเรียบร้อย 📄✨', '✂️');
+  }
+
+  function printOrSaveTicket() {
+    triggerHaptic('light');
+    playTone(600, 'sine', 0.1, 0.15);
+    try { window.print(); } catch (e) { saveTicketText(); }
+  }
+
+  function resetIntakeForm() {
+    document.getElementById('dispensed-step').classList.add('hidden');
+    document.getElementById('intake-step').classList.remove('hidden');
+    
+    const btnTear = document.getElementById('btn-tear-action');
+    btnTear.innerHTML = '<span>✂️</span> <span>คลิกเพื่อฉีกตั๋ว (Tear Off)</span>';
+    btnTear.className = 'px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-md';
+    isTorn = false;
+  }
+
+  // NOTICE LETTER GENERATOR
+  function buildNotice() {
+    const v = (id) => document.getElementById(id).value.trim();
+    const th = (iso) => iso ? new Date(iso + 'T00:00:00').toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : '........................';
+    const rcpt = v('nt-recipient'), amt = parseFloat(v('nt-amount'));
+    if (!rcpt || !amt) { showToast('กรอกชื่อผู้รับและจำนวนเงินก่อน', '⚠️'); return; }
+    const type = v('nt-type'), days = v('nt-days') || '15';
+    if (v('nt-date') && v('nt-due') && v('nt-due') < v('nt-date')) { showToast('วันครบกำหนดชำระต้องไม่มาก่อนวันที่เกิดหนี้', '⚠️'); return; }
+    const rate = parseFloat(v('nt-rate')) || 0;
+    if (rate < 0) { showToast('อัตราดอกเบี้ยต้องไม่ติดลบ', '⚠️'); return; }
+    if (type === 'loan' && rate > 15) { showToast('ดอกเบี้ยเงินกู้ยืมเกินร้อยละ 15 ต่อปีไม่ชอบด้วยกฎหมาย (ป.พ.พ. ม.654)', '⚠️'); return; }
+    let intTxt = 'พร้อมดอกเบี้ยตามกฎหมาย (ถ้ามี)';
+    if (rate > 0) {
+      intTxt = `พร้อมดอกเบี้ยร้อยละ ${rate} ต่อปี`;
+      if (v('nt-due')) {
+        const dueD = new Date(v('nt-due') + 'T00:00:00'), now0 = new Date(), today0 = new Date(now0.getFullYear(), now0.getMonth(), now0.getDate());
+        const late = Math.round((today0 - dueD) / 86400000);
+        if (late > 0) {
+          const interest = amt * rate / 100 * late / 365;
+          intTxt += ` ซึ่งคำนวณถึงวันที่ออกหนังสือ (${late} วัน) เป็นเงิน ${interest.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท และดอกเบี้ยต่อไปจนกว่าจะชำระเสร็จ`;
+        }
+      }
+    }
+    const money = amt.toLocaleString('th-TH', { maximumFractionDigits: 2 });
+    const subject = { loan: 'ขอให้ชำระเงินกู้ยืม', rent: 'ขอให้ชำระค่าเช่าค้างชำระ', goods: 'ขอให้ชำระค่าสินค้า/บริการค้างชำระ' }[type];
+    const fact = {
+      loan: `ท่านได้ยืมเงินจากข้าพเจ้าเมื่อวันที่ ${th(v('nt-date'))} จำนวน ${money} บาท โดยตกลงว่าจะชำระคืนภายในวันที่ ${th(v('nt-due'))}`,
+      rent: `ท่านได้เช่าทรัพย์สินจากข้าพเจ้าตั้งแต่วันที่ ${th(v('nt-date'))} และค้างชำระค่าเช่ารวม ${money} บาท ซึ่งถึงกำหนดชำระภายในวันที่ ${th(v('nt-due'))}`,
+      goods: `ท่านได้รับสินค้า/บริการจากข้าพเจ้าเมื่อวันที่ ${th(v('nt-date'))} เป็นเงิน ${money} บาท โดยตกลงจะชำระภายในวันที่ ${th(v('nt-due'))}`
+    }[type];
+    const pay = v('nt-pay') ? `โดยชำระได้ที่: ${v('nt-pay')}\n\n` : '';
+    const text = `หนังสือบอกกล่าวทวงถาม\n\nวันที่ ${th(new Date().toLocaleDateString('sv-SE'))}\n\nเรื่อง ${subject}\nเรียน ${rcpt}\n${v('nt-address') ? 'ที่อยู่ ' + v('nt-address') + '\n' : ''}\n${fact} แต่ถึงปัจจุบันท่านยังไม่ได้ชำระ ทั้งที่ข้าพเจ้าได้ติดตามทวงถามแล้ว\n\nข้าพเจ้าจึงขอบอกกล่าวทวงถามให้ท่านชำระเงินจำนวน ${money} บาท ${intTxt} ภายใน ${days} วัน นับแต่วันที่ได้รับหนังสือฉบับนี้\n\n${pay}หากพ้นกำหนดดังกล่าวโดยท่านยังไม่ชำระ ข้าพเจ้าจำเป็นต้องดำเนินคดีตามกฎหมายต่อไป ซึ่งท่านอาจต้องรับผิดชดใช้ค่าฤชาธรรมเนียมและค่าใช้จ่ายในการดำเนินคดีเพิ่มเติม\n\nจึงเรียนมาเพื่อโปรดดำเนินการ\n\nขอแสดงความนับถือ\n\n\n( ${v('nt-sender') || '........................'} )\nผู้ส่งหนังสือ`;
+    document.getElementById('nt-output').value = text;
+    playTone(659.25, 'triangle', 0.08, 0.15);
+    showToast('สร้างร่างหนังสือแล้ว ตรวจและแก้ไขก่อนส่ง', '✉️');
+  }
+  async function copyNotice() {
+    const t = document.getElementById('nt-output').value;
+    if (!t) { showToast('ยังไม่มีร่างหนังสือ กดสร้างก่อน', '⚠️'); return; }
+    try { await navigator.clipboard.writeText(t); showToast('คัดลอกแล้ว', '📋'); }
+    catch (e) { document.getElementById('nt-output').select(); showToast('กด Ctrl/Cmd+C เพื่อคัดลอกข้อความที่เลือก', '📋'); }
+  }
+  async function saveNotice() {
+    const t = document.getElementById('nt-output').value;
+    if (!t) { showToast('ยังไม่มีร่างหนังสือ กดสร้างก่อน', '⚠️'); return; }
+    try {
+      const dl = window.claude ? await window.claude.use('downloads') : null;
+      if (!dl) throw new Error('no');
+      await dl.save({ filename: 'หนังสือบอกกล่าวทวงถาม.txt', data: t });
+    } catch (e) { copyNotice(); }
+  }
+
+  // KNOWLEDGE BASE: search + category chips
+  let kbCat = '';
+  function initKb() {
+    const cards = [...document.querySelectorAll('.kb-card')], box = document.getElementById('kb-chips');
+    if (!box) return;
+    const cats = [...new Set(cards.map(c => c.querySelector('span').textContent.trim()))];
+    box.innerHTML = ['', ...cats].map(c => `<button type="button" data-cat="${esc(c)}" class="kb-chip px-3 py-1 rounded-full text-xs border border-stone-300 dark:border-stone-700 transition">${c ? esc(c) : 'ทั้งหมด'}</button>`).join('');
+    box.addEventListener('click', (e) => { const b = e.target.closest('.kb-chip'); if (b) { kbCat = b.dataset.cat; filterKb(); } });
+    filterKb();
+  }
+  function filterKb() {
+    const q = (document.getElementById('kb-search')?.value || '').trim().toLowerCase();
+    let shown = 0;
+    document.querySelectorAll('.kb-card').forEach(c => {
+      const ok = (!kbCat || c.querySelector('span').textContent.trim() === kbCat) && (!q || c.textContent.toLowerCase().includes(q));
+      c.classList.toggle('hidden', !ok); if (ok) shown++;
+    });
+    document.getElementById('kb-empty')?.classList.toggle('hidden', shown > 0);
+    document.querySelectorAll('.kb-chip').forEach(b => {
+      const on = b.dataset.cat === kbCat;
+      b.classList.toggle('bg-stone-900', on); b.classList.toggle('text-white', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+  // Modal: close with Esc or backdrop click
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !document.getElementById('ticket-modal').classList.contains('hidden')) closeTicketModal(); });
+  document.getElementById('ticket-modal').addEventListener('mousedown', (e) => { if (e.target.id === 'ticket-modal') closeTicketModal(); });
+
+  // Interactive Cursor ambient glow tracker
+  document.addEventListener('mousemove', (e) => {
+    const glow = document.getElementById('ambient-glow');
+    if (glow) {
+      glow.style.left = e.clientX + 'px';
+      glow.style.top = e.clientY + 'px';
+    }
+  });
+
+  // Initialize Default Calculator Date to today & Apply Theme
+  window.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    renderHistory();
+    renderRiskForm();
+    initKb();
+    showPage(validPage(), true);
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('calc-date');
+    if (dateInput) {
+      dateInput.value = today;
+      runPrescriptionCalc();
+    }
+  });
+</script>
+</body></html>
